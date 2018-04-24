@@ -90,7 +90,8 @@ def add_class_by_name(header_only, qualified_name):
     # Load the template module for that project.
     mod_path = os.path.join(workspace, '.tpl', project)
     sys.path.append(mod_path)
-    mod = __import__('project_settings')
+    mod = __import__(project + '_settings')
+    sys.path.pop()
     # Load project-specific paths.
     component = mod.get_component(qualified_name)
     paths = mod.make_paths(os.path.join(workspace, project), component, qualified_name)
