@@ -1,0 +1,115 @@
+#!/usr/bin/env python
+
+# Usage:
+# add_class [-o] QUALIFIED-NAME
+# Options:
+# -o   Header-only (do not add .cpp file)
+
+# Usage example:
+# - Header, class, and test: add_class.py libvast vast::system::foo
+# - Header and test: add_class.py -o libvast vast::system::foo
+
+import argparse, sys, os, imp
+
+# get current workspace directory
+workspace = os.path.dirname(os.path.realpath(__file__))
+
+def read_tpl(project):
+    base = os.path.join(workspace, '.tpl', project)
+    if not os.path.isdir(base):
+        raise Exception('No template found under ' + base)
+    tpls={}
+    for entry in ['copyright', 'header', 'source', 'test']:
+        with open(os.path.join(base, entry), 'r') as f:
+            tpls[entry] = f.read()
+    return tpls
+
+def parse_set_cmd(f, new_entry):
+    entries=[new_entry]
+    for line_with_newline in f:
+        line = line_with_newline[:-1]
+        if line == new_entry:
+            raise Exception(new_entry + " already exists in CMakeLists.txt")
+        if line == ')':
+            entries.sort()
+            return entries
+        else:
+            # Append line without the trailing newline characters.
+            entries.append(line)
+    raise Exception("format error in CMakeLists.txt: no closing ')' to set(")
+
+def extend_cmake(cmake_settings, header_only):
+    lines=[]
+    cmake_file = cmake_settings['file']
+    # Read old content from file.
+    with open(cmake_file, 'r') as f:
+        sources_marker = 'set(' + cmake_settings['source_var']
+        new_sources_entry = '  ' + cmake_settings['source_path']
+        test_marker = ''
+        if 'test_var' in cmake_settings:
+            test_marker = 'set(' + cmake_settings['test_var']
+            new_test_entry = '  ' + cmake_settings['test_path']
+        for line_with_newline in f:
+            line = line_with_newline[:-1]
+            lines.append(line)
+            if not header_only and line == sources_marker:
+                lines += parse_set_cmd(f, '  ' + cmake_settings['source_path'])
+                lines.append(')')
+            elif test_marker != '' and line == test_marker:
+                lines += parse_set_cmd(f, '  ' + cmake_settings['test_path'])
+                lines.append(')')
+    # Write new content to file.
+    with open(cmake_file, 'w') as f:
+        for line in lines:
+            f.write(line)
+            f.write('\n')
+
+def make_file(file_path, copyright, tpl, replacements):
+    # Make sure directory exists.
+    dirname = os.path.dirname(file_path)
+    if not os.path.isdir(dirname):
+        os.makedirs(os.path.dirname(file_path))
+    # Create (or override) file and write content.
+    with open(file_path, 'w') as f:
+        f.write(copyright)
+        f.write(tpl % replacements)
+
+def guess_project(qualified_name):
+    suffix_end = qualified_name.index('::')
+    top_level = qualified_name[:suffix_end]
+    if top_level == "tenzir":
+        return "core"
+    return top_level
+
+def main():
+    parser = argparse.ArgumentParser(description='Add a new C++ class.')
+    parser.add_argument('-o', dest='header_only', action='store_true',
+                        help="header only (don't generate a .cpp file)")
+    parser.add_argument("name", help='fully qualified class name')
+    args = parser.parse_args()
+    # Extract the project from the given name.
+    project = guess_project(args.name)
+    # Load the template module for that project.
+    mod_path = os.path.join(workspace, '.tpl', project)
+    sys.path.append(mod_path)
+    mod = __import__('project_settings')
+    # Load project-specific paths.
+    component = mod.get_component(args.name)
+    paths = mod.make_paths(os.path.join(workspace, project), component, args.name)
+    # Add new files to CMake.
+    extend_cmake(paths['cmake'], args.header_only)
+    # Load project-specific templates.
+    tpls = {}
+    for tpl in ['copyright', 'header', 'source', 'test']:
+        with open(os.path.join(workspace, '.tpl', project, tpl)) as f:
+            tpls[tpl] = f.read()
+    # Generate files.
+    tpl_replacements = mod.make_tpl_replacements(args.name)
+    copyright = tpls['copyright'] % tpl_replacements
+    make_file(paths['hpp'], copyright, tpls['header'], tpl_replacements)
+    make_file(paths['tst'], copyright, tpls['test'], tpl_replacements)
+    if not args.header_only:
+        make_file(paths['cpp'], copyright, tpls['source'], tpl_replacements)
+
+if __name__ == "__main__":
+    main()

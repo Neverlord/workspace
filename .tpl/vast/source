@@ -1,0 +1,13 @@
+#include "%(hpp)s"
+
+namespace %(namespace)s {
+
+%(class)s::%(class)s() {
+  // nop
+}
+
+%(class)s::~%(class)s() {
+  // nop
+}
+
+} // namespace %(namespace)s

@@ -1,0 +1,11 @@
+#pragma once
+
+%(open-namespaces)s
+
+class %(class)s {
+public:
+  %(class)s();
+  ~%(class)s();
+};
+
+%(close-namespaces)s

@@ -1,0 +1,22 @@
+#include "caf/config.hpp"
+
+#define CAF_SUITE %(class)s
+#include "caf/test/dsl.hpp"
+
+#include "%(hpp)s"
+
+namespace {
+
+struct fixture {
+
+};
+
+} // namespace <anonymous>
+
+CAF_TEST_FIXTURE_SCOPE(%(class)s_tests, fixture)
+
+CAF_TEST(todo) {
+  // implement me
+}
+
+CAF_TEST_FIXTURE_SCOPE_END()
