@@ -12,7 +12,10 @@
 import argparse, sys, os, imp
 
 # get current workspace directory
-workspace = os.path.dirname(os.path.realpath(__file__))
+if '__file__' in locals() or '__file__' in globals():
+    workspace = os.path.dirname(os.path.realpath(__file__))
+else:
+    workspace = os.getcwd()
 
 def read_tpl(project):
     base = os.path.join(workspace, '.tpl', project)
@@ -81,35 +84,35 @@ def guess_project(qualified_name):
         return "core"
     return top_level
 
-def main():
-    parser = argparse.ArgumentParser(description='Add a new C++ class.')
-    parser.add_argument('-o', dest='header_only', action='store_true',
-                        help="header only (don't generate a .cpp file)")
-    parser.add_argument("name", help='fully qualified class name')
-    args = parser.parse_args()
+def add_class_by_name(header_only, qualified_name):
     # Extract the project from the given name.
-    project = guess_project(args.name)
+    project = guess_project(qualified_name)
     # Load the template module for that project.
     mod_path = os.path.join(workspace, '.tpl', project)
     sys.path.append(mod_path)
     mod = __import__('project_settings')
     # Load project-specific paths.
-    component = mod.get_component(args.name)
-    paths = mod.make_paths(os.path.join(workspace, project), component, args.name)
+    component = mod.get_component(qualified_name)
+    paths = mod.make_paths(os.path.join(workspace, project), component, qualified_name)
     # Add new files to CMake.
-    extend_cmake(paths['cmake'], args.header_only)
+    extend_cmake(paths['cmake'], header_only)
     # Load project-specific templates.
     tpls = {}
     for tpl in ['copyright', 'header', 'source', 'test']:
         with open(os.path.join(workspace, '.tpl', project, tpl)) as f:
             tpls[tpl] = f.read()
     # Generate files.
-    tpl_replacements = mod.make_tpl_replacements(args.name)
+    tpl_replacements = mod.make_tpl_replacements(qualified_name)
     copyright = tpls['copyright'] % tpl_replacements
     make_file(paths['hpp'], copyright, tpls['header'], tpl_replacements)
     make_file(paths['tst'], copyright, tpls['test'], tpl_replacements)
-    if not args.header_only:
+    if not header_only:
         make_file(paths['cpp'], copyright, tpls['source'], tpl_replacements)
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__" and sys.argv[0] != 'vim':
+    parser = argparse.ArgumentParser(description='Add a new C++ class.')
+    parser.add_argument('-o', dest='header_only', action='store_true',
+                        help="header only (don't generate a .cpp file)")
+    parser.add_argument("name", help='fully qualified class name')
+    args = parser.parse_args()
+    add_class_by_name(args.header_only, args.name)
