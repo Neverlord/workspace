@@ -41,7 +41,7 @@ def parse_set_cmd(f, new_entry):
             entries.append(line)
     raise Exception("format error in CMakeLists.txt: no closing ')' to set(")
 
-def extend_cmake(cmake_settings, header_only):
+def extend_cmake(cmake_settings, generate_source, generate_test):
     lines=[]
     cmake_file = cmake_settings['file']
     # Read old content from file.
@@ -55,10 +55,10 @@ def extend_cmake(cmake_settings, header_only):
         for line_with_newline in f:
             line = line_with_newline[:-1]
             lines.append(line)
-            if not header_only and line == sources_marker:
+            if generate_source and sources_marker != '' and line == sources_marker:
                 lines += parse_set_cmd(f, '  ' + cmake_settings['source_path'])
                 lines.append(')')
-            elif test_marker != '' and line == test_marker:
+            elif generate_test and test_marker != '' and line == test_marker:
                 lines += parse_set_cmd(f, '  ' + cmake_settings['test_path'])
                 lines.append(')')
     # Write new content to file.
@@ -84,7 +84,8 @@ def guess_project(qualified_name):
         return "core"
     return top_level
 
-def add_class_by_name(header_only, qualified_name):
+# Generates a header plus source file for a class as well as a unit test.
+def generate_from_name(generate_header, generate_source, generate_test, qualified_name):
     # Extract the project from the given name.
     project = guess_project(qualified_name)
     # Load the template module for that project.
@@ -96,7 +97,7 @@ def add_class_by_name(header_only, qualified_name):
     component = mod.get_component(qualified_name)
     paths = mod.make_paths(os.path.join(workspace, project), component, qualified_name)
     # Add new files to CMake.
-    extend_cmake(paths['cmake'], header_only)
+    extend_cmake(paths['cmake'], generate_source, generate_test)
     # Load project-specific templates.
     tpls = {}
     for tpl in ['copyright', 'header', 'source', 'test']:
@@ -105,15 +106,26 @@ def add_class_by_name(header_only, qualified_name):
     # Generate files.
     tpl_replacements = mod.make_tpl_replacements(qualified_name)
     copyright = tpls['copyright'] % tpl_replacements
-    make_file(paths['hpp'], copyright, tpls['header'], tpl_replacements)
-    make_file(paths['tst'], copyright, tpls['test'], tpl_replacements)
-    if not header_only:
+    if generate_header:
+        make_file(paths['hpp'], copyright, tpls['header'], tpl_replacements)
+    if generate_test:
+        make_file(paths['tst'], copyright, tpls['test'], tpl_replacements)
+    if generate_source:
         make_file(paths['cpp'], copyright, tpls['source'], tpl_replacements)
+
+# Convenience function.
+def add_class_by_name(header_only, qualified_name):
+    generate_from_name(True, not header_only, True, qualified_name)
 
 if __name__ == "__main__" and sys.argv[0] != 'vim':
     parser = argparse.ArgumentParser(description='Add a new C++ class.')
     parser.add_argument('-o', dest='header_only', action='store_true',
                         help="header only (don't generate a .cpp file)")
+    parser.add_argument('-u', dest='unit_test_only', action='store_true',
+                        help="unit test only (don't generate a class)")
     parser.add_argument("name", help='fully qualified class name')
     args = parser.parse_args()
-    add_class_by_name(args.header_only, args.name)
+    if args.unit_test_only:
+        generate_from_name(False, False, True, args.name)
+    else:
+        add_class_by_name(args.header_only, args.name)
