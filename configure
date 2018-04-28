@@ -7,6 +7,14 @@ import sys, re, os, shutil
 from subprocess import call
 from subprocess import check_call
 
+# list dependencies
+deps = {
+  'vast': ['caf'],
+  'broker': ['caf'],
+  'benchmarks': ['caf'],
+  'core': ['vast', 'caf'],
+}
+
 # get current workspace directory
 workspace = os.path.dirname(os.path.realpath(__file__))
 
@@ -35,7 +43,7 @@ def build_project(project):
 def is_hidden(file_name):
   return name.startswith('.')
 
-def process_project(name, state, xs, deps, options, as_depdency):
+def process_project(name, state, xs, options, as_depdency):
   print('>>> process ' + name)
   # build dependencies first
   if name in deps:
@@ -52,9 +60,9 @@ def process_project(name, state, xs, deps, options, as_depdency):
     build_project(name)
     state['build'] = True
 
-def process_projects(xs, deps, options):
+def process_projects(xs, options):
   for name, settings in xs.items():
-    process_project(name, settings, xs, deps, options, False)
+    process_project(name, settings, xs, options, False)
 
 
 if __name__ == "__main__":
@@ -86,12 +94,6 @@ if __name__ == "__main__":
       if rxres != None:
         for key in options:
           options[key].append(arg)
-  # list dependencies
-  deps = {
-    'vast': ['caf'],
-    'broker': ['caf'],
-    'core': ['vast', 'caf'],
-  }
   # scan workspace for loaded projects
   projs = {}
   for name in os.listdir(workspace):
@@ -103,4 +105,4 @@ if __name__ == "__main__":
         'configured': False,
       }
   # configure/build recursively
-  process_projects(projs, deps, options)
+  process_projects(projs, options)
