@@ -1,5 +1,8 @@
 #!/bin/sh
 
+echo "update workspace"
+git pull
+
 for i in * ; do
   if [ -d "$i"  ] && [ -d "$i/.git"  ] ; then
     echo "update $i"
