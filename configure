@@ -10,25 +10,52 @@ from subprocess import check_call
 # get current workspace directory
 workspace = os.path.dirname(os.path.realpath(__file__))
 
-def config_project(project, options, build_project):
+def config_project(project, options):
   cli = options[project]
   path = os.path.join(workspace, project)
   os.chdir(path)
   build_dir = os.path.join(path, "build")
   if os.path.isdir(build_dir):
-    print("remove outdated build directory: " + build_dir)
+    print('>>> remove outdated build directory: ' + build_dir)
     shutil.rmtree(build_dir)
   cmd = ["./configure"]
   cmd.extend(cli)
-  print(project + " -> " + str(cmd))
+  print('>>> call: ' + str(cmd))
   check_call(cmd)
-  if build_project:
-    print(project + " -> run ninja")
-    call(["ninja", "-C", "build"])
+  os.chdir(workspace)
+
+def build_project(project):
+  path = os.path.join(workspace, project)
+  os.chdir(path)
+  cmd = ["ninja", "-C", "build"]
+  print('>>> call: ' + str(cmd))
+  check_call(cmd)
   os.chdir(workspace)
 
 def is_hidden(file_name):
   return name.startswith('.')
+
+def process_project(name, state, xs, deps, options, as_depdency):
+  print('>>> process ' + name)
+  # build dependencies first
+  if name in deps:
+    for dep in deps[name]:
+      print('>>> resolve depdency of ' + name + ': ' + dep)
+      process_project(dep, xs[dep], xs, deps, options, True)
+      options[name].append('--with-' + dep + '=' + xs[dep]['path'])
+  if not state['configured']:
+    print('>>> configure ' + name)
+    config_project(name, options)
+    state['configured'] = True
+  if as_depdency and not state['build']:
+    print('>>> build ' + name)
+    build_project(name)
+    state['build'] = True
+
+def process_projects(xs, deps, options):
+  for name, settings in xs.items():
+    process_project(name, settings, xs, deps, options, False)
+
 
 if __name__ == "__main__":
   options = {}
@@ -59,11 +86,21 @@ if __name__ == "__main__":
       if rxres != None:
         for key in options:
           options[key].append(arg)
-  # always build CAF first, since it's the dependency for all other projects
-  config_project("caf", options, True)
-  caf_dir = os.path.join(workspace, "caf", "build")
+  # list dependencies
+  deps = {
+    'vast': ['caf'],
+    'broker': ['caf'],
+    'core': ['vast', 'caf'],
+  }
+  # scan workspace for loaded projects
+  projs = {}
   for name in os.listdir(workspace):
-    full_name = os.path.join(workspace, name)
-    if not is_hidden(name) and name != "caf" and os.path.isdir(full_name):
-      options[name].append("--with-caf=" + caf_dir)
-      config_project(name, options, False)
+    abs_path = os.path.join(workspace, name)
+    if not is_hidden(name) and os.path.isdir(name):
+      projs[name] = {
+        'path': abs_path + '/build',
+        'build': False,
+        'configured': False,
+      }
+  # configure/build recursively
+  process_projects(projs, deps, options)
