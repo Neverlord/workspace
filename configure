@@ -49,7 +49,7 @@ def process_project(name, state, xs, options, as_depdency):
   if name in deps:
     for dep in deps[name]:
       print('>>> resolve depdency of ' + name + ': ' + dep)
-      process_project(dep, xs[dep], xs, deps, options, True)
+      process_project(dep, xs[dep], xs, options, True)
       options[name].append('--with-' + dep + '=' + xs[dep]['path'])
   if not state['configured']:
     print('>>> configure ' + name)
