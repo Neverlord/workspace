@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+# Usage example:
+# checkout caf
+# checkout -https vast
+
+import argparse
+
+from subprocess import check_call
+
+urls = {
+  'caf': {
+    'ssh': 'git@github.com:actor-framework/actor-framework.git',
+    'https': 'https://github.com/actor-framework/actor-framework.git',
+  },
+  'vast': {
+    'ssh': 'git@github.com:vast-io/vast.git',
+    'https': 'https://github.com/vast-io/vast.git',
+  },
+}
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Checkout repositories.')
+    parser.add_argument('-https', dest='method', action='store_const',
+                        const='https', default='ssh',
+                        help="header only (don't generate a .cpp file)")
+    parser.add_argument('repos', metavar='N', type=str, nargs='+',
+                         help='repositories to check out')
+    args = parser.parse_args()
+    method = args.method
+    for repo in args.repos:
+        check_call(['git', 'clone', urls[repo][method], repo])
