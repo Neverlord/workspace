@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 # Usage:
-# add_class [-o] QUALIFIED-NAME
+# add_class [-H|-C|-U] QUALIFIED-NAME
 # Options:
-# -o   Header-only (do not add .cpp file)
+# -H   No header
+# -C   No class File
+# -U   No unit test
 
 # Usage example:
 # - Header, class, and test: add_class.py libvast vast::system::foo
@@ -119,13 +121,12 @@ def add_class_by_name(header_only, qualified_name):
 
 if __name__ == "__main__" and sys.argv[0] != 'vim':
     parser = argparse.ArgumentParser(description='Add a new C++ class.')
-    parser.add_argument('-o', dest='header_only', action='store_true',
-                        help="header only (don't generate a .cpp file)")
-    parser.add_argument('-u', dest='unit_test_only', action='store_true',
-                        help="unit test only (don't generate a class)")
+    parser.add_argument('-H', dest='no_header', action='store_true',
+                        help="don't generate header file")
+    parser.add_argument('-C', dest='no_cpp', action='store_true',
+                        help="don't generate implementation (.cpp) file")
+    parser.add_argument('-U', dest='no_test', action='store_true',
+                        help="don't generate unit test file")
     parser.add_argument("name", help='fully qualified class name')
     args = parser.parse_args()
-    if args.unit_test_only:
-        generate_from_name(False, False, True, args.name)
-    else:
-        add_class_by_name(args.header_only, args.name)
+    generate_from_name(not args.no_header, not args.no_cpp, not args.no_test, args.name)
