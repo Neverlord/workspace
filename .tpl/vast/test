@@ -1,7 +1,10 @@
 #define SUITE %(class)s
-#include "test.hpp"
 
 #include "%(hpp)s"
+
+#include "test.hpp"
+
+using namespace vast;
 
 namespace {
 

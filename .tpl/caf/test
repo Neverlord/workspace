@@ -1,9 +1,10 @@
-#include "caf/config.hpp"
-
 #define CAF_SUITE %(class)s
-#include "caf/test/dsl.hpp"
 
 #include "%(hpp)s"
+
+#include "caf/test/dsl.hpp"
+
+using namespace caf;
 
 namespace {
 
