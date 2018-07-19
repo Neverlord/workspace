@@ -1,5 +1,6 @@
 Makefile
-broker
-caf
-core
-vast
+benchmarks/
+broker/
+caf/
+core/
+vast/
