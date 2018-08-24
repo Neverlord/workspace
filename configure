@@ -9,18 +9,33 @@ from subprocess import check_call
 
 # list dependencies
 deps = {
-  'vast': ['caf'],
-  'broker': ['caf'],
   'benchmarks': ['caf'],
-  'core': ['vast', 'caf'],
+  'broker': ['caf'],
+  'core': ['vast', 'caf', 'broker'],
+  'vast': ['caf'],
+}
+
+# dev mode flags
+dev_mode_flags = {
+  'benchmarks': [],
+  'broker': ['--build-type=debug', '--enable-asan', '--enable-debug'],
+  'caf': ['--dev-mode'],
+  'core': ['--dev-mode'],
+  'vast': ['--dev-mode'],
 }
 
 # get current workspace directory
 workspace = os.path.dirname(os.path.realpath(__file__))
 
+# turn on developer mode for given project
+def dev_mode(project, options):
+  for opt in dev_mode_flags[project]:
+    options.append(opt)
+
 def config_project(project, options):
   cli = options[project]
   path = os.path.join(workspace, project)
+  print('>>> chdir: ' + path)
   os.chdir(path)
   build_dir = os.path.join(path, "build")
   if os.path.isdir(build_dir):
@@ -42,6 +57,9 @@ def build_project(project):
 
 def is_hidden(file_name):
   return name.startswith('.')
+
+def is_cmake_project(dir_name):
+  return os.path.isdir(dir_name) and not is_hidden(dir_name) and os.path.isfile(dir_name + '/CMakeLists.txt')
 
 def process_project(name, state, xs, options, as_depdency):
   print('>>> process ' + name)
@@ -70,7 +88,7 @@ if __name__ == "__main__":
   # first iterate all subdirectories (= projects) and add dictionary entries
   # for each of them
   for name in os.listdir(workspace):
-    if not is_hidden(name):
+    if is_cmake_project(name):
       options[name] = ["--generator=Ninja"]
   # our default pattern extracts the project name (group 1) and
   # project-specific options (group 2)
@@ -80,7 +98,10 @@ if __name__ == "__main__":
   # parse CLI arguments
   for arg in sys.argv[1:]:
     rxres = pattern.match(arg)
-    if rxres != None:
+    if arg == '--dev-mode':
+      for key in options:
+        dev_mode(key, options[key])
+    elif rxres != None:
       project = rxres.group(1)
       opt = "--" + rxres.group(2)
       # add options prefixed with '--all:...' to all projects
@@ -98,7 +119,7 @@ if __name__ == "__main__":
   projs = {}
   for name in os.listdir(workspace):
     abs_path = os.path.join(workspace, name)
-    if not is_hidden(name) and os.path.isdir(name):
+    if is_cmake_project(name):
       projs[name] = {
         'path': abs_path + '/build',
         'build': False,
