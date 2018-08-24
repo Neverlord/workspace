@@ -1,0 +1,11 @@
+#!/bin/bash
+
+function find_compile_command_dbs() {
+  for i in * ; do
+    if [ -d "$i" ] && [ -d "$i/build" ] && [ -f "$i/build/compile_commands.json" ]; then
+      echo "$i/build/compile_commands.json"
+    fi
+  done
+}
+
+jq '.[]' $(find_compile_command_dbs) | jq -s '.' > compile_commands.json
