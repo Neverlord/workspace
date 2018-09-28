@@ -1,9 +1,12 @@
 #!/bin/bash
 
+build_type="$1"
+
 function find_compile_command_dbs() {
   for i in * ; do
-    if [ -d "$i" ] && [ -d "$i/build" ] && [ -f "$i/build/compile_commands.json" ]; then
-      echo "$i/build/compile_commands.json"
+    build_dir="$i/build/$build_type"
+    if [ -d "$build_dir" ] && [ -f "$build_dir/compile_commands.json" ]; then
+      echo "$build_dir/compile_commands.json"
     fi
   done
 }

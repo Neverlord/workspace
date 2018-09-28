@@ -27,32 +27,43 @@ dev_mode_flags = {
 # get current workspace directory
 workspace = os.path.dirname(os.path.realpath(__file__))
 
+# configures whether we run in test mode
+dry_run = False
+
+# configures whether we delete existing build directories
+clean_slate = False
+
 # turn on developer mode for given project
 def dev_mode(project, options):
   for opt in dev_mode_flags[project]:
     options.append(opt)
 
-def config_project(project, options):
+# invokes ./configure script of the project
+def config_project(project, settings, options):
   cli = options[project]
   path = os.path.join(workspace, project)
   print('>>> chdir: ' + path)
   os.chdir(path)
-  build_dir = os.path.join(path, "build")
+  build_dir = settings['path']
   if os.path.isdir(build_dir):
     print('>>> remove outdated build directory: ' + build_dir)
-    shutil.rmtree(build_dir)
-  cmd = ["./configure"]
+    if clean_slate and not dry_run:
+      shutil.rmtree(build_dir)
+  cmd = ["./configure", "--build-dir=" + build_dir]
   cmd.extend(cli)
-  print('>>> call: ' + str(cmd))
-  check_call(cmd)
+  print('>>> call: ' + ' '.join(cmd))
+  if not dry_run:
+    check_call(cmd)
   os.chdir(workspace)
 
-def build_project(project):
+# builds the project via ninja
+def build_project(project, settings):
   path = os.path.join(workspace, project)
   os.chdir(path)
-  cmd = ["ninja", "-C", "build"]
+  cmd = ["ninja", "-C", settings['path']]
   print('>>> call: ' + str(cmd))
-  check_call(cmd)
+  if not dry_run:
+    check_call(cmd)
   os.chdir(workspace)
 
 def is_hidden(file_name):
@@ -71,11 +82,11 @@ def process_project(name, state, xs, options, as_depdency):
       options[name].append('--with-' + dep + '=' + xs[dep]['path'])
   if not state['configured']:
     print('>>> configure ' + name)
-    config_project(name, options)
+    config_project(name, xs[name], options)
     state['configured'] = True
   if as_depdency and not state['build']:
     print('>>> build ' + name)
-    build_project(name)
+    build_project(name, xs[name])
     state['build'] = True
 
 def process_projects(xs, options):
@@ -95,12 +106,18 @@ if __name__ == "__main__":
   pattern = re.compile("--([a-z]+):(.+)")
   # setting the build type affects all projects
   build_type_pattern = re.compile("--build-type=(.+)")
+  # build debug by default
+  build_type = "debug"
   # parse CLI arguments
   for arg in sys.argv[1:]:
     rxres = pattern.match(arg)
     if arg == '--dev-mode':
       for key in options:
         dev_mode(key, options[key])
+    elif arg == '--dry-run':
+      dry_run = True
+    elif arg == 'delete-old-builds':
+      clean_slate = True
     elif rxres != None:
       project = rxres.group(1)
       opt = "--" + rxres.group(2)
@@ -113,6 +130,7 @@ if __name__ == "__main__":
     else:
       rxres = build_type_pattern.match(arg)
       if rxres != None:
+        build_type = rxres.group(1)
         for key in options:
           options[key].append(arg)
   # scan workspace for loaded projects
@@ -121,7 +139,7 @@ if __name__ == "__main__":
     abs_path = os.path.join(workspace, name)
     if is_cmake_project(name):
       projs[name] = {
-        'path': abs_path + '/build',
+        'path': abs_path + '/build/' + build_type,
         'build': False,
         'configured': False,
       }

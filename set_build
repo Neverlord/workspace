@@ -1,8 +1,29 @@
 #/bin/bash
 
-printf "all:\n\tninja -C caf/build" > Makefile
+build_type="$1"
+shift
 
-for arg in "$@"; do
-  printf " && ninja -C $arg/build" >> Makefile
+if [ "$build_type" != "debug" ] && [ "$build_type" != "release" ] ; then
+  echo "expected 'debug' or 'release' as first argument"
+  echo "usage: [debug|release] projects..."
+  exit 1
+fi
+
+function find_compile_command_dbs() {
+  for i in "$@" ; do
+    build_dir="$i/build/$build_type"
+    if [ -d "$build_dir" ] && [ -f "$build_dir/compile_commands.json" ]; then
+      echo "$build_dir/compile_commands.json"
+    fi
+  done
+}
+
+printf "all:\n\tninja -C caf/build/$build_type" > Makefile
+
+for i in "$@"; do
+  printf " && ninja -C $i/build/$build_type" >> Makefile
 done
+
 printf "\n" >> Makefile
+
+jq '.[]' $(find_compile_command_dbs caf "$@") | jq -s '.' > compile_commands.json
