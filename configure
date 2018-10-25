@@ -116,7 +116,7 @@ if __name__ == "__main__":
         dev_mode(key, options[key])
     elif arg == '--dry-run':
       dry_run = True
-    elif arg == 'delete-old-builds':
+    elif arg == '--delete-old-builds':
       clean_slate = True
     elif rxres != None:
       project = rxres.group(1)
