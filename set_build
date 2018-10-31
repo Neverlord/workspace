@@ -3,7 +3,7 @@
 build_type="$1"
 shift
 
-if [ "$build_type" != "debug" ] && [ "$build_type" != "release" ] ; then
+if [ "$build_type" != "debug" ] && [ "$build_type" != "release" ] && [ "$build_type" != "RelWithDebInfo" ] ; then
   echo "expected 'debug' or 'release' as first argument"
   echo "usage: [debug|release] projects..."
   exit 1
