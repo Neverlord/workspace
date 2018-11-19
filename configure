@@ -12,7 +12,7 @@ deps = {
   'benchmarks': ['caf'],
   'broker': ['caf'],
   'core': ['vast', 'caf', 'broker'],
-  'vast': ['caf'],
+  'vast': ['caf', 'broker'],
 }
 
 # dev mode flags
