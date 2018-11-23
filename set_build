@@ -1,29 +1,50 @@
-#/bin/bash
+#!/usr/bin/env python
 
-build_type="$1"
-shift
+import sys, os, json
 
-if [ "$build_type" != "debug" ] && [ "$build_type" != "release" ] && [ "$build_type" != "RelWithDebInfo" ] ; then
-  echo "expected 'debug' or 'release' as first argument"
-  echo "usage: [debug|release] projects..."
-  exit 1
-fi
+from collections import OrderedDict
 
-function find_compile_command_dbs() {
-  for i in "$@" ; do
-    build_dir="$i/build/$build_type"
-    if [ -d "$build_dir" ] && [ -f "$build_dir/compile_commands.json" ]; then
-      echo "$build_dir/compile_commands.json"
-    fi
-  done
-}
+# get current workspace directory
+workspace = os.path.dirname(os.path.realpath(__file__))
 
-printf "all:\n\tninja -C caf/build/$build_type" > Makefile
+# read dependency file
+deps = json.load(open(workspace + '/deps.json'))
 
-for i in "$@"; do
-  printf " && ninja -C $i/build/$build_type" >> Makefile
-done
+# constants
+build_types = ['debug', 'release', 'RelWithDebInfo']
 
-printf "\n" >> Makefile
+def resolve_dependencies(name):
+  # build dependency list
+  result = []
+  for dep in deps[name]:
+    result.extend(resolve_dependencies(dep))
+  # de-duplicate dependencies
+  return OrderedDict((x, True) for x in result).keys() + [name]
 
-jq '.[]' $(find_compile_command_dbs caf "$@") | jq -s '.' > compile_commands.json
+def main():
+  # verify build type
+  build_type = sys.argv[1]
+  if (not build_type in build_types):
+    print('>>> invalid build type, expected one of: ' + str(build_types))
+    return
+  # convenience variables
+  buildSuffix = '/build/' + build_type
+  cleanSuffix = '/build/' + build_type + ' clean'
+  dbSuffix = buildSuffix + '/compile_commands.json'
+  # compute full build order including dependencies
+  build_order = resolve_dependencies(sys.argv[2])
+  # write Makefile
+  f = open('Makefile', 'w')
+  f.write('all:\n\t')
+  f.write(' && '.join('ninja -C ' + x + buildSuffix for x in build_order))
+  f.write('\nclean:\n\t')
+  f.write(' && '.join('ninja -C ' + x + cleanSuffix for x in build_order))
+  f.write('\n')
+  # read all compile databases into a single one
+  db = []
+  for lst in (json.load(open(x + dbSuffix)) for x in build_order):
+    db.extend(lst)
+  json.dump(db, open(workspace + '/compile_commands.json', 'w'), indent = 2)
+
+if __name__ == "__main__":
+  main()
