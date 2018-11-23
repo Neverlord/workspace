@@ -2,30 +2,19 @@
 
 # Usage example: ./configure --caf:with-log-level=trace --all:enable-asan
 
-import sys, re, os, shutil
+import sys, re, os, shutil, json
 
 from subprocess import call
 from subprocess import check_call
 
-# list dependencies
-deps = {
-  'benchmarks': ['caf'],
-  'broker': ['caf'],
-  'core': ['vast', 'caf', 'broker'],
-  'vast': ['caf', 'broker'],
-}
-
-# dev mode flags
-dev_mode_flags = {
-  'benchmarks': [],
-  'broker': ['--build-type=debug', '--enable-asan', '--enable-debug'],
-  'caf': ['--dev-mode'],
-  'core': ['--dev-mode'],
-  'vast': ['--dev-mode'],
-}
-
 # get current workspace directory
 workspace = os.path.dirname(os.path.realpath(__file__))
+
+# read dependency file
+deps = json.load(open(workspace + '/deps.json'))
+
+# read dev-mode flags file
+dev_mode_flags = json.load(open(workspace + '/dev_mode_flags.json'))
 
 # configures whether we run in test mode
 dry_run = False

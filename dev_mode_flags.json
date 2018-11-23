@@ -1,0 +1,7 @@
+{
+  "benchmarks": [],
+  "broker": ["--build-type=debug", "--enable-asan", "--enable-debug"],
+  "caf": ["--dev-mode"],
+  "core": ["--dev-mode"],
+  "vast": ["--dev-mode"]
+}
