@@ -1,0 +1,45 @@
+{
+  "dependencies": {
+    "benchmarks": [
+      "caf"
+    ],
+    "broker": [
+      "caf"
+    ],
+    "vast": [
+      "broker",
+      "caf"
+    ],
+    "core": [
+      "vast",
+      "caf",
+      "broker"
+    ]
+  },
+  "dev-mode-flags": {
+    "broker": [
+      "--build-type=debug",
+      "--enable-asan",
+      "--enable-debug"
+    ],
+    "caf": [
+      "--dev-mode"
+    ],
+    "core": [
+      "--dev-mode"
+    ],
+    "vast": [
+      "--dev-mode"
+    ]
+  },
+  "forced-flags": {
+    "caf": [
+      "--no-opencl"
+    ],
+    "broker": [
+      "--disable-python",
+      "--disable-docs",
+      "--disable-tests"
+    ]
+  }
+}

@@ -10,11 +10,11 @@ from subprocess import check_call
 # get current workspace directory
 workspace = os.path.dirname(os.path.realpath(__file__))
 
-# read dependency file
-deps = json.load(open(workspace + '/deps.json'))
-
-# read dev-mode flags file
-dev_mode_flags = json.load(open(workspace + '/dev_mode_flags.json'))
+# read settings
+settings = json.load(open(workspace + '/settings.json'))
+deps = settings['dependencies']
+dev_mode_flags = settings['dev-mode-flags']
+forced_flags = settings['forced-flags']
 
 # configures whether we run in test mode
 dry_run = False
@@ -22,14 +22,10 @@ dry_run = False
 # configures whether we delete existing build directories
 clean_slate = False
 
-# turn on developer mode for given project
-def dev_mode(project, options):
-  for opt in dev_mode_flags[project]:
-    options.append(opt)
-
 # invokes ./configure script of the project
 def config_project(project, settings, options):
   cli = options[project]
+  cli.extend(forced_flags.get(project, []))
   path = os.path.join(workspace, project)
   print('>>> chdir: ' + path)
   os.chdir(path)
@@ -102,7 +98,7 @@ if __name__ == "__main__":
     rxres = pattern.match(arg)
     if arg == '--dev-mode':
       for key in options:
-        dev_mode(key, options[key])
+        options[key].extend(dev_mode_flags.get(key, []))
     elif arg == '--dry-run':
       dry_run = True
     elif arg == '--delete-old-builds':

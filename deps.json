@@ -1,7 +1,0 @@
-{
-  "caf": [],
-  "benchmarks": ["caf"],
-  "broker": ["caf"],
-  "vast": ["broker"],
-  "core": ["vast"]
-}

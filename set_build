@@ -7,8 +7,9 @@ from collections import OrderedDict
 # get current workspace directory
 workspace = os.path.dirname(os.path.realpath(__file__))
 
-# read dependency file
-deps = json.load(open(workspace + '/deps.json'))
+# fetch the dependencies from the settings file
+settings = json.load(open(workspace + '/settings.json'))
+deps = settings['dependencies']
 
 # constants
 build_types = ['debug', 'release', 'RelWithDebInfo']
@@ -16,7 +17,7 @@ build_types = ['debug', 'release', 'RelWithDebInfo']
 def resolve_dependencies(name):
   # build dependency list
   result = []
-  for dep in deps[name]:
+  for dep in deps.get(name, []):
     result.extend(resolve_dependencies(dep))
   # de-duplicate dependencies
   return OrderedDict((x, True) for x in result).keys() + [name]
@@ -33,13 +34,21 @@ def main():
   dbSuffix = buildSuffix + '/compile_commands.json'
   # compute full build order including dependencies
   build_order = resolve_dependencies(sys.argv[2])
-  # write Makefile
-  f = open('Makefile', 'w')
-  f.write('all:\n\t')
-  f.write(' && '.join('ninja -C ' + x + buildSuffix for x in build_order))
-  f.write('\nclean:\n\t')
-  f.write(' && '.join('ninja -C ' + x + cleanSuffix for x in build_order))
-  f.write('\n')
+  # write workspaces Makefile
+  with open('Makefile', 'w') as f:
+    f.write('all:\n\t')
+    f.write(' && '.join('ninja -C ' + x + buildSuffix for x in build_order))
+    f.write('\nclean:\n\t')
+    f.write(' && '.join('ninja -C ' + x + cleanSuffix for x in build_order))
+    f.write('\n')
+  # write localMakefiles
+  for proj in build_order:
+    with open(proj + '/Makefile', 'w') as f:
+      f.write('all:\n\t')
+      f.write('ninja -C build/' + build_type)
+      f.write('\nclean:\n\t')
+      f.write('ninja -C build/' + build_type + ' clean')
+      f.write('\n')
   # read all compile databases into a single one
   db = []
   for lst in (json.load(open(x + dbSuffix)) for x in build_order):
