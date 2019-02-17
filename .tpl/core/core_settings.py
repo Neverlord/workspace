@@ -1,6 +1,9 @@
 import os
 
-def make_paths(root_dir, component, qualified_name):
+def get_component_path(root_dir, qualified_name):
+    return os.path.join(root_dir, 'core')
+
+def make_paths(root_dir, qualified_name):
     if not qualified_name.startswith('tenzir::'):
         raise Exception('qualified name must start with "tenzir::"')
     namev = qualified_name.split('::')
@@ -11,15 +14,18 @@ def make_paths(root_dir, component, qualified_name):
     # Compute paths to .cpp files relative to component directory.
     rel_cpp = os.path.join('src', '/'.join(namev[1:-1]), class_name + '.cpp')
     rel_tst = os.path.join('test', '/'.join(namev[1:-1]), class_name + '.cpp')
+    # Get the absolute path to our component.
+    component_dir = os.path.join(get_component_path(root_dir, qualified_name),
+                                 component)
     return {
         # Absolute paths to generated files.
-        'hpp': os.path.join(root_dir, '/'.join(namev[:-1]), class_name + '.hpp'),
-        'cpp': os.path.join(root_dir, rel_cpp),
-        'tst': os.path.join(root_dir, rel_tst),
+        'hpp': os.path.join(component_dir, '/'.join(namev[:-1]), class_name + '.hpp'),
+        'cpp': os.path.join(component_dir, rel_cpp),
+        'tst': os.path.join(component_dir, rel_tst),
         # CMake settings.
         'cmake': {
             # Path of the CMakeLists.txt
-            'file': os.path.join(root_dir, 'CMakeLists.txt'),
+            'file': os.path.join(component_dir, 'CMakeLists.txt'),
             # Name of the sources variable in CMake.
             'source_var': 'libtenzir_sources',
             # Relative path to the source file for CMake.
@@ -30,9 +36,6 @@ def make_paths(root_dir, component, qualified_name):
             'test_path': rel_tst,
         },
     }
-
-def get_component(qualified_name):
-    return 'core'
 
 def make_tpl_replacements(qualified_name):
     if not qualified_name.startswith('tenzir::'):

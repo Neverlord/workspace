@@ -3,5 +3,6 @@ benchmarks/
 broker/
 caf/
 core/
+incubator/
 integration/
 vast/

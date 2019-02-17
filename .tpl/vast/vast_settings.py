@@ -1,6 +1,6 @@
 import os
 
-def make_paths(root_dir, component, qualified_name):
+def make_paths(root_dir, qualified_name):
     if not qualified_name.startswith('vast::'):
         raise Exception('qualified name must start with "vast::"')
     namev = qualified_name.split('::')
@@ -12,7 +12,7 @@ def make_paths(root_dir, component, qualified_name):
     rel_cpp = os.path.join('src', '/'.join(namev[1:-1]), class_name + '.cpp')
     rel_tst = os.path.join('test', '/'.join(namev[1:-1]), class_name + '.cpp')
     # Get the absolute path to our component.
-    component_dir = os.path.join(root_dir, component)
+    component_dir = os.path.join(root_dir, 'vast', 'libvast')
     return {
         # Absolute paths to generated files.
         'hpp': os.path.join(component_dir, '/'.join(namev[:-1]), class_name + '.hpp'),
@@ -23,7 +23,7 @@ def make_paths(root_dir, component, qualified_name):
             # Path of the CMakeLists.txt
             'file': os.path.join(component_dir, 'CMakeLists.txt'),
             # Name of the sources variable in CMake.
-            'source_var': component + '_sources',
+            'source_var': 'libvast_sources',
             # Relative path to the source file for CMake.
             'source_path': rel_cpp,
             # Name of the unit test variable in CMake.
@@ -32,9 +32,6 @@ def make_paths(root_dir, component, qualified_name):
             'test_path': rel_tst,
         },
     }
-
-def get_component(qualified_name):
-    return 'libvast'
 
 def make_tpl_replacements(qualified_name):
     if not qualified_name.startswith('vast::'):

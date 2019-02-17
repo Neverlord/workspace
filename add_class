@@ -96,8 +96,7 @@ def generate_from_name(generate_header, generate_source, generate_test, qualifie
     mod = __import__(project + '_settings')
     sys.path.pop()
     # Load project-specific paths.
-    component = mod.get_component(qualified_name)
-    paths = mod.make_paths(os.path.join(workspace, project), component, qualified_name)
+    paths = mod.make_paths(workspace, qualified_name)
     # Add new files to CMake.
     extend_cmake(paths['cmake'], generate_source, generate_test)
     # Load project-specific templates.

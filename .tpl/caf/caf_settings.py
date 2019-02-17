@@ -1,6 +1,25 @@
 import os, datetime
 
-def make_paths(root_dir, component, qualified_name):
+component_dirs = {
+    'libcaf_core': os.path.join('caf', 'libcaf_core'),
+    'libcaf_io': os.path.join('caf', 'libcaf_io'),
+    'libcaf_openssl': os.path.join('caf', 'libcaf_openssl'),
+    'libcaf_opencl': os.path.join('caf', 'libcaf_opencl'),
+    'libcaf_bb': os.path.join('incubator', 'libcaf_bb'),
+}
+
+def get_component(qualified_name):
+    if qualified_name.startswith('caf::io'):
+        return 'libcaf_io'
+    if qualified_name.startswith('caf::openssl'):
+        return 'libcaf_openssl'
+    if qualified_name.startswith('caf::opencl'):
+        return 'libcaf_opencl'
+    if qualified_name.startswith('caf::bb'):
+        return 'libcaf_bb'
+    return os.path.join(root_dir, 'caf', 'libcaf_core')
+
+def make_paths(root_dir, qualified_name):
     if not qualified_name.startswith('caf::'):
         raise Exception('qualified name must start with "caf::"')
     namev = qualified_name.split('::')
@@ -12,7 +31,8 @@ def make_paths(root_dir, component, qualified_name):
     rel_cpp = os.path.join('src', class_name + '.cpp')
     rel_tst = os.path.join('test', class_name + '.cpp')
     # Get the absolute path to our component.
-    component_dir = os.path.join(root_dir, component)
+    component = get_component(qualified_name)
+    component_dir = os.path.join(root_dir, component_dirs[component])
     return {
         # Absolute paths to generated files.
         'hpp': os.path.join(component_dir, '/'.join(namev[:-1]), class_name + '.hpp'),
@@ -28,15 +48,6 @@ def make_paths(root_dir, component, qualified_name):
             'source_path': rel_cpp,
         },
     }
-
-def get_component(qualified_name):
-    if qualified_name.startswith('caf::io'):
-        return 'libcaf_io'
-    if qualified_name.startswith('caf::openssl'):
-        return 'libcaf_openssl'
-    if qualified_name.startswith('caf::opencl'):
-        return 'libcaf_opencl'
-    return 'libcaf_core'
 
 def make_tpl_replacements(qualified_name):
     if not qualified_name.startswith('caf::'):
