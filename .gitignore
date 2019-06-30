@@ -2,6 +2,7 @@ Makefile
 benchmarks/
 broker/
 caf/
+continuous-integration/
 core/
 incubator/
 integration/
