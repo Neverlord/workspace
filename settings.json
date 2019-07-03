@@ -6,14 +6,17 @@
     "broker": [
       "caf"
     ],
-    "vast": [
-      "broker",
-      "caf"
-    ],
     "core": [
       "vast",
       "caf",
       "broker"
+    ],
+    "incubator": [
+      "caf"
+    ],
+    "vast": [
+      "broker",
+      "caf"
     ]
   },
   "dev-mode-flags": {
@@ -26,6 +29,9 @@
       "--dev-mode"
     ],
     "core": [
+      "--dev-mode"
+    ],
+    "incubator": [
       "--dev-mode"
     ],
     "vast": [

@@ -20,7 +20,7 @@ def resolve_dependencies(name):
   for dep in deps.get(name, []):
     result.extend(resolve_dependencies(dep))
   # de-duplicate dependencies
-  return OrderedDict((x, True) for x in result).keys() + [name]
+  return list(dict.fromkeys(result + [name]))
 
 def main():
   # verify build type

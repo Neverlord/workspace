@@ -6,6 +6,7 @@ component_dirs = {
     'libcaf_openssl': os.path.join('caf', 'libcaf_openssl'),
     'libcaf_opencl': os.path.join('caf', 'libcaf_opencl'),
     'libcaf_bb': os.path.join('incubator', 'libcaf_bb'),
+    'libcaf_net': os.path.join('incubator', 'libcaf_net'),
 }
 
 def get_component(qualified_name):
@@ -17,6 +18,8 @@ def get_component(qualified_name):
         return 'libcaf_opencl'
     if qualified_name.startswith('caf::bb'):
         return 'libcaf_bb'
+    if qualified_name.startswith('caf::net'):
+        return 'libcaf_net'
     return os.path.join(root_dir, 'caf', 'libcaf_core')
 
 def make_paths(root_dir, qualified_name):
