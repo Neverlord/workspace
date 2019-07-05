@@ -2,8 +2,6 @@
 
 import sys, os, json
 
-from collections import OrderedDict
-
 # get current workspace directory
 workspace = os.path.dirname(os.path.realpath(__file__))
 
@@ -16,11 +14,16 @@ build_types = ['debug', 'release', 'RelWithDebInfo']
 
 def resolve_dependencies(name):
   # build dependency list
-  result = []
+  all_deps = []
   for dep in deps.get(name, []):
-    result.extend(resolve_dependencies(dep))
+    all_deps.extend(resolve_dependencies(dep))
   # de-duplicate dependencies
-  return list(dict.fromkeys(result + [name]))
+  result = []
+  for dep in all_deps:
+    if not dep in result:
+      result.append(dep)
+  result.append(name)
+  return result
 
 def main():
   # verify build type
