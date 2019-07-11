@@ -15,8 +15,7 @@ def make_paths(root_dir, qualified_name):
     rel_cpp = os.path.join('src', '/'.join(namev[1:-1]), class_name + '.cpp')
     rel_tst = os.path.join('test', '/'.join(namev[1:-1]), class_name + '.cpp')
     # Get the absolute path to our component.
-    component_dir = os.path.join(get_component_path(root_dir, qualified_name),
-                                 component)
+    component_dir = os.path.join(root_dir, 'core')
     return {
         # Absolute paths to generated files.
         'hpp': os.path.join(component_dir, '/'.join(namev[:-1]), class_name + '.hpp'),
