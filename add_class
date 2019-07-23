@@ -30,17 +30,26 @@ def read_tpl(project):
     return tpls
 
 def parse_set_cmd(f, new_entry):
-    entries=[new_entry]
+    entries = set()
     for line_with_newline in f:
-        line = line_with_newline[:-1]
-        if line == new_entry:
-            raise Exception(new_entry + " already exists in CMakeLists.txt")
+        line = line_with_newline.rstrip()
+        # Compute indentation on the first line.
+        if not entries:
+            indentation = ' ' * (len(line) - len(line.lstrip()))
+            entries.add(indentation + new_entry)
         if line == ')':
-            entries.sort()
-            return entries
+            result = list(entries)
+            result.sort()
+            result.append(')')
+            return result
+        elif line[-1] == ')':
+            entries.add(line[:-1])
+            result = list(entries)
+            result.sort()
+            result[-1] += ')'
+            return result
         else:
-            # Append line without the trailing newline characters.
-            entries.append(line)
+            entries.add(line)
     raise Exception("format error in CMakeLists.txt: no closing ')' to set(")
 
 def extend_cmake(cmake_settings, generate_source, generate_test):
@@ -58,11 +67,9 @@ def extend_cmake(cmake_settings, generate_source, generate_test):
             line = line_with_newline[:-1]
             lines.append(line)
             if generate_source and sources_marker != '' and line == sources_marker:
-                lines += parse_set_cmd(f, '  ' + cmake_settings['source_path'])
-                lines.append(')')
+                lines += parse_set_cmd(f, cmake_settings['source_path'])
             elif generate_test and test_marker != '' and line == test_marker:
-                lines += parse_set_cmd(f, '  ' + cmake_settings['test_path'])
-                lines.append(')')
+                lines += parse_set_cmd(f, cmake_settings['test_path'])
     # Write new content to file.
     with open(cmake_file, 'w') as f:
         for line in lines:
