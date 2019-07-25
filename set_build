@@ -10,7 +10,7 @@ settings = json.load(open(workspace + '/settings.json'))
 deps = settings['dependencies']
 
 # constants
-build_types = ['debug', 'release', 'RelWithDebInfo']
+build_types = ['debug', 'release', 'RelWithDebugInfo']
 
 def resolve_dependencies(name):
   # build dependency list
