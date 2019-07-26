@@ -12,7 +12,7 @@ struct fixture {
 
 };
 
-} // namespace <anonymous>
+} // namespace
 
 FIXTURE_SCOPE(%(class)s_tests, fixture)
 
