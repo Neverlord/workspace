@@ -20,7 +20,7 @@ def get_component(qualified_name):
         return 'libcaf_bb'
     if qualified_name.startswith('caf::net'):
         return 'libcaf_net'
-    return os.path.join(root_dir, 'caf', 'libcaf_core')
+    return 'libcaf_core'
 
 def make_paths(root_dir, qualified_name):
     if not qualified_name.startswith('caf::'):
