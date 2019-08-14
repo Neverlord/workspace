@@ -13,6 +13,10 @@ urls = {
     'ssh': 'git@github.com:actor-framework/actor-framework.git',
     'https': 'https://github.com/actor-framework/actor-framework.git',
   },
+  'broker': {
+    'ssh': 'git@github.com:zeek/broker.git',
+    'https': 'https://github.com/zeek/broker.git',
+  },
   'vast': {
     'ssh': 'git@github.com:vast-io/vast.git',
     'https': 'https://github.com/vast-io/vast.git',
