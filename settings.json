@@ -44,8 +44,7 @@
     ],
     "broker": [
       "--disable-python",
-      "--disable-docs",
-      "--disable-tests"
+      "--disable-docs"
     ]
   }
 }
