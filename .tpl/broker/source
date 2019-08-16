@@ -1,0 +1,13 @@
+#include "%(hpp)s"
+
+%(open-namespaces)s
+
+%(class)s::%(class)s() {
+  // nop
+}
+
+%(class)s::~%(class)s() {
+  // nop
+}
+
+%(close-namespaces)s

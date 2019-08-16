@@ -1,0 +1,23 @@
+#define CAF_SUITE %(class)s
+
+#include "%(hpp)s"
+
+#include "test.hpp"
+
+using namespace broker;
+
+namespace {
+
+struct fixture {
+
+};
+
+} // namespace
+
+CAF_TEST_FIXTURE_SCOPE(%(class)s_tests, fixture)
+
+CAF_TEST(todo) {
+  // implement me
+}
+
+CAF_TEST_FIXTURE_SCOPE_END()

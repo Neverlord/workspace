@@ -42,6 +42,8 @@ def parse_set_cmd(f, new_entry):
             result.sort()
             result.append(')')
             return result
+        elif line == '':
+            pass
         elif line[-1] == ')':
             entries.add(line[:-1])
             result = list(entries)
@@ -52,29 +54,39 @@ def parse_set_cmd(f, new_entry):
             entries.add(line)
     raise Exception("format error in CMakeLists.txt: no closing ')' to set(")
 
-def extend_cmake(cmake_settings, generate_source, generate_test):
+def extend_cmake_impl(cmake_settings, cmake_file, sources_marker, test_marker):
     lines=[]
-    cmake_file = cmake_settings['file']
     # Read old content from file.
     with open(cmake_file, 'r') as f:
-        sources_marker = 'set(' + cmake_settings['source_var']
-        new_sources_entry = '  ' + cmake_settings['source_path']
-        test_marker = ''
-        if 'test_var' in cmake_settings:
-            test_marker = 'set(' + cmake_settings['test_var']
-            new_test_entry = '  ' + cmake_settings['test_path']
         for line_with_newline in f:
             line = line_with_newline[:-1]
             lines.append(line)
-            if generate_source and sources_marker != '' and line == sources_marker:
+            if sources_marker != '' and line == sources_marker:
                 lines += parse_set_cmd(f, cmake_settings['source_path'])
-            elif generate_test and test_marker != '' and line == test_marker:
+            elif test_marker != '' and line == test_marker:
                 lines += parse_set_cmd(f, cmake_settings['test_path'])
     # Write new content to file.
     with open(cmake_file, 'w') as f:
         for line in lines:
             f.write(line)
             f.write('\n')
+
+def extend_cmake(cmake_settings, generate_source, generate_test):
+    if not generate_source and not generate_test:
+        return
+    sources_marker = ''
+    if generate_source:
+        sources_marker = 'set(' + cmake_settings['source_var']
+    test_marker = ''
+    if generate_test and 'test_var' in cmake_settings:
+        test_marker = 'set(' + cmake_settings['test_var']
+    if 'test_file' in cmake_settings:
+        if sources_marker != '':
+            extend_cmake_impl(cmake_settings, cmake_settings['file'], sources_marker, '')
+        if test_marker != '':
+            extend_cmake_impl(cmake_settings, cmake_settings['test_file'], '', test_marker)
+    else:
+        extend_cmake_impl(cmake_settings, cmake_settings['file'], sources_marker, test_marker)
 
 def make_file(file_path, copyright, tpl, replacements):
     # Make sure directory exists.
@@ -109,8 +121,12 @@ def generate_from_name(generate_header, generate_source, generate_test, qualifie
     # Load project-specific templates.
     tpls = {}
     for tpl in ['copyright', 'header', 'source', 'test']:
-        with open(os.path.join(workspace, '.tpl', project, tpl)) as f:
-            tpls[tpl] = f.read()
+        fname = os.path.join(workspace, '.tpl', project, tpl)
+        if os.path.exists(fname):
+            with open(fname) as f:
+                tpls[tpl] = f.read()
+        else:
+            tpls[tpl] = ''
     # Generate files.
     tpl_replacements = mod.make_tpl_replacements(qualified_name)
     copyright = tpls['copyright'] % tpl_replacements

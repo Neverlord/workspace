@@ -1,0 +1,14 @@
+#ifndef %(header-guard)s
+#define %(header-guard)s
+
+%(open-namespaces)s
+
+class %(class)s {
+public:
+  %(class)s();
+  ~%(class)s();
+};
+
+%(close-namespaces)s
+
+#endif // %(header-guard)s
