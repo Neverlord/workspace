@@ -21,6 +21,10 @@ urls = {
     'ssh': 'git@github.com:vast-io/vast.git',
     'https': 'https://github.com/vast-io/vast.git',
   },
+  'incubator': {
+    'ssh': 'git@github.com:actor-framework/incubator.git',
+    'https': 'https://github.com/actor-framework/incubator.git',
+  },
 }
 
 if __name__ == "__main__":
