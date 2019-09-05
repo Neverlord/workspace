@@ -3,7 +3,6 @@ benchmarks/
 broker/
 caf/
 continuous-integration/
-core/
 incubator/
-integration/
+run.sh
 vast/
