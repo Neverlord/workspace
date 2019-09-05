@@ -137,11 +137,7 @@ def generate_from_name(generate_header, generate_source, generate_test, qualifie
     if generate_source:
         make_file(paths['cpp'], copyright, tpls['source'], tpl_replacements)
 
-# Convenience function.
-def add_class_by_name(header_only, qualified_name):
-    generate_from_name(True, not header_only, True, qualified_name)
-
-if __name__ == "__main__" and sys.argv[0] != 'vim':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Add a new C++ class.')
     parser.add_argument('-H', dest='no_header', action='store_true',
                         help="don't generate header file")
