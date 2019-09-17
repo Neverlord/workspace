@@ -1,5 +1,4 @@
-#ifndef %(header-guard)s
-#define %(header-guard)s
+#pragma once
 
 %(open-namespaces)s
 
@@ -10,5 +9,3 @@ public:
 };
 
 %(close-namespaces)s
-
-#endif // %(header-guard)s
