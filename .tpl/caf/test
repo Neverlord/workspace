@@ -1,4 +1,4 @@
-#define CAF_SUITE %(class)s
+#define CAF_SUITE %(qualified-class)s
 
 #include "%(hpp)s"
 

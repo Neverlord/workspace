@@ -31,8 +31,8 @@ def make_paths(root_dir, qualified_name):
     # Extract the unqualified class name.
     class_name = namev[-1]
     # Compute paths to .cpp files relative to component directory.
-    rel_cpp = os.path.join('src', class_name + '.cpp')
-    rel_tst = os.path.join('test', class_name + '.cpp')
+    rel_cpp = os.path.join('src', '/'.join(namev[1:-1]), class_name + '.cpp')
+    rel_tst = os.path.join('test', '/'.join(namev[1:-1]), class_name + '.cpp')
     # Get the absolute path to our component.
     component = get_component(qualified_name)
     component_dir = os.path.join(root_dir, component_dirs[component])
@@ -67,6 +67,7 @@ def make_tpl_replacements(qualified_name):
     # Return replacements for our template files.
     return {
         'class': class_name,
+        'qualified-class': '.'.join(namev[:-1]),
         'open-namespaces': ns_open,
         'close-namespaces': ns_close,
         'hpp':  '/'.join(namev) + '.hpp',
