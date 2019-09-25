@@ -67,7 +67,7 @@ def make_tpl_replacements(qualified_name):
     # Return replacements for our template files.
     return {
         'class': class_name,
-        'qualified-class': '.'.join(namev[:-1]),
+        'qualified-class': '.'.join(namev[1:]),
         'open-namespaces': ns_open,
         'close-namespaces': ns_close,
         'hpp':  '/'.join(namev) + '.hpp',
