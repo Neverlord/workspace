@@ -15,7 +15,7 @@ def make_paths(root_dir, qualified_name):
     component_dir = os.path.join(root_dir, "broker")
     return {
         # Absolute paths to generated files.
-        'hpp': os.path.join(component_dir, '/'.join(namev[:-1]), class_name + '.hh'),
+        'hpp': os.path.join(component_dir, "include", '/'.join(namev[:-1]), class_name + '.hh'),
         'cpp': os.path.join(component_dir, rel_cpp),
         'tst': os.path.join(component_dir, 'tests', rel_tst),
         # CMake settings.
