@@ -17,6 +17,10 @@
     "vast": [
       "broker",
       "caf"
+    ],
+    "zeek": [
+      "broker",
+      "caf"
     ]
   },
   "dev-mode-flags": {
@@ -36,6 +40,10 @@
     ],
     "vast": [
       "--dev-mode"
+    ],
+    "zeek": [
+      "--sanitizers=address",
+      "--enable-debug"
     ]
   },
   "forced-flags": {
