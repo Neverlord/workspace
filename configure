@@ -29,12 +29,13 @@ def config_project(project, settings, options):
   path = os.path.join(workspace, project)
   print('>>> chdir: ' + path)
   os.chdir(path)
-  build_dir = settings['path']
+  build_dir = settings['build-dir']
+  prefix = settings['prefix']
   if os.path.isdir(build_dir):
     print('>>> remove outdated build directory: ' + build_dir)
     if clean_slate and not dry_run:
       shutil.rmtree(build_dir)
-  cmd = ["./configure", "--build-dir=" + build_dir]
+  cmd = ["./configure", "--build-dir=" + build_dir, "--prefix=" + prefix]
   cmd.extend(cli)
   print('>>> call: ' + ' '.join(cmd))
   if not dry_run:
@@ -45,7 +46,7 @@ def config_project(project, settings, options):
 def build_project(project, settings):
   path = os.path.join(workspace, project)
   os.chdir(path)
-  cmd = ["ninja", "-C", settings['path']]
+  cmd = ["ninja", "-C", settings['build-dir']]
   print('>>> call: ' + str(cmd))
   if not dry_run:
     check_call(cmd)
@@ -64,7 +65,7 @@ def process_project(name, state, xs, options, as_depdency):
     for dep in deps[name]:
       print('>>> resolve depdency of ' + name + ': ' + dep)
       process_project(dep, xs[dep], xs, options, True)
-      options[name].append('--with-' + dep + '=' + xs[dep]['path'])
+      options[name].append('--with-' + dep + '=' + xs[dep]['build-dir'])
   if not state['configured']:
     print('>>> configure ' + name)
     config_project(name, xs[name], options)
@@ -124,7 +125,8 @@ if __name__ == "__main__":
     abs_path = os.path.join(workspace, name)
     if is_cmake_project(name):
       projs[name] = {
-        'path': abs_path + '/build/' + build_type,
+        'build-dir': abs_path + '/build/' + build_type,
+        'prefix': workspace + '/bundle/' + build_type,
         'build': False,
         'configured': False,
       }
