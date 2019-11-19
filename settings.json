@@ -47,9 +47,6 @@
     ]
   },
   "forced-flags": {
-    "caf": [
-      "--no-opencl"
-    ],
     "broker": [
       "--disable-python",
       "--disable-docs"
