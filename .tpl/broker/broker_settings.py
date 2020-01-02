@@ -43,16 +43,13 @@ def make_tpl_replacements(qualified_name):
         raise Exception('qualified name does not contain a valid class name')
     # Extract the namespace without the class name.
     namespace = '::'.join(namev[:-1])
-    ns_open = "\n".join(map(lambda x: 'namespace ' + x + ' {', namev[:-1]))
-    ns_close = "\n".join(map(lambda x: '} // namespace ' + x, reversed(namev[:-1])))
     # Extract the unqualified class name.
     class_name = namev[-1]
     # Return replacements for our template files.
     return {
         'class': class_name,
-        'open-namespaces': ns_open,
-        'close-namespaces': ns_close,
+        'qualified-class': '.'.join(namev[1:]),
+        'namespace': namespace,
         'hpp':  '/'.join(namev) + '.hh',
-        'header-guard':  ('_'.join(namev) + '_HH').upper(),
         'year': datetime.datetime.now().year
     }

@@ -1,6 +1,6 @@
 #pragma once
 
-%(open-namespaces)s
+namespace %(namespace)s {
 
 class %(class)s {
 public:
@@ -8,4 +8,4 @@ public:
   ~%(class)s();
 };
 
-%(close-namespaces)s
+} // namespace %(namespace)s

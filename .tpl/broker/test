@@ -1,8 +1,8 @@
-#define CAF_SUITE %(class)s
+#define SUITE %(qualified-class)s
 
 #include "%(hpp)s"
 
-#include "test.hpp"
+#include "test.hh"
 
 using namespace broker;
 
@@ -14,10 +14,10 @@ struct fixture {
 
 } // namespace
 
-CAF_TEST_FIXTURE_SCOPE(%(class)s_tests, fixture)
+FIXTURE_SCOPE(%(class)s_tests, fixture)
 
-CAF_TEST(todo) {
+TEST(todo) {
   // implement me
 }
 
-CAF_TEST_FIXTURE_SCOPE_END()
+FIXTURE_SCOPE_END()
