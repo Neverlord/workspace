@@ -1,6 +1,6 @@
 #include "%(hpp)s"
 
-%(open-namespaces)s
+namespace %(namespace)s {
 
 %(class)s::%(class)s() {
   // nop
@@ -10,4 +10,4 @@
   // nop
 }
 
-%(close-namespaces)s
+} // namespace %(namespace)s
