@@ -6,16 +6,7 @@
     "broker": [
       "caf"
     ],
-    "core": [
-      "vast",
-      "caf",
-      "broker"
-    ],
     "incubator": [
-      "caf"
-    ],
-    "vast": [
-      "broker",
       "caf"
     ],
     "zeek": [
@@ -26,19 +17,13 @@
   "dev-mode-flags": {
     "broker": [
       "--build-type=debug",
-      "--enable-asan",
+      "--sanitizers=address",
       "--enable-debug"
     ],
     "caf": [
       "--dev-mode"
     ],
-    "core": [
-      "--dev-mode"
-    ],
     "incubator": [
-      "--dev-mode"
-    ],
-    "vast": [
       "--dev-mode"
     ],
     "zeek": [
@@ -47,9 +32,5 @@
     ]
   },
   "forced-flags": {
-    "broker": [
-      "--disable-python",
-      "--disable-docs"
-    ]
   }
 }
