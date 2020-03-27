@@ -9,9 +9,6 @@ workspace = os.path.dirname(os.path.realpath(__file__))
 settings = json.load(open(workspace + '/settings.json'))
 deps = settings['dependencies']
 
-# constants
-build_types = ['debug', 'release', 'RelWithDebugInfo']
-
 def resolve_dependencies(name):
   # build dependency list
   all_deps = []
@@ -26,11 +23,7 @@ def resolve_dependencies(name):
   return result
 
 def main():
-  # verify build type
   build_type = sys.argv[1]
-  if (not build_type in build_types):
-    print('>>> invalid build type, expected one of: ' + str(build_types))
-    return
   # convenience variables
   buildSuffix = '/build/' + build_type
   dbSuffix = buildSuffix + '/compile_commands.json'
@@ -46,14 +39,6 @@ def main():
       f.write(target + ':\n\t')
       f.write(' && '.join('ninja -C ' + x + target_suffix(target) for x in build_order))
       f.write('\n')
-  # write localMakefiles
-  for proj in build_order:
-    with open(proj + '/Makefile', 'w') as f:
-      f.write('all:\n')
-      f.write('\tninja -C build/' + build_type + '\n')
-      for target in ['clean', 'install']:
-        f.write(target + ':\n')
-        f.write('\tninja -C build/' + build_type + ' ' + target + '\n')
   # read all compile databases into a single one
   db = []
   for lst in (json.load(open(x + dbSuffix)) for x in build_order):
