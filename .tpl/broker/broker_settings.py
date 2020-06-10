@@ -24,14 +24,16 @@ def make_paths(root_dir, qualified_name):
             'file': os.path.join(component_dir, 'CMakeLists.txt'),
             # Path of the CMakeLists.txt for the unit tests.
             'test_file': os.path.join(component_dir, 'tests', 'CMakeLists.txt'),
-            # Name of the sources variable in CMake.
-            'source_var': 'BROKER_SRC',
-            # Name of the unit test variable in CMake.
-            'test_var': 'tests',
+            # Beginning of source files listings in CMake.
+            'source_begin_marker': 'set(BROKER_SRC',
+            # Beginning of unit test listings in CMake.
+            'test_begin_marker': 'set(tests',
             # Relative path to the source file for CMake.
             'source_path': rel_cpp,
             # Relative path to the unit test file for CMake.
             'test_path': rel_tst,
+            # CMake entry for this test suite.
+            'test_suite': rel_tst,
         },
     }
 

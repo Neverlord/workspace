@@ -54,55 +54,65 @@ def parse_set_cmd(f, new_entry):
             entries.add(line)
     raise Exception("format error in CMakeLists.txt: no closing ')' to set(")
 
-def extend_cmake_impl(cmake_settings, cmake_file, sources_marker, test_marker):
+def extend_cmake_impl(cmake_settings, cmake_file, source_begin_marker, test_begin_marker):
     lines=[]
+    added_source_file = False
+    added_test_suite = False
     # Read old content from file.
     with open(cmake_file, 'r') as f:
         for line_with_newline in f:
             line = line_with_newline[:-1]
             lines.append(line)
-            if sources_marker != '' and line == sources_marker:
+            if source_begin_marker != '' and source_begin_marker in line:
+                added_source_file = True
                 lines += parse_set_cmd(f, cmake_settings['source_path'])
-            elif test_marker != '' and line == test_marker:
-                lines += parse_set_cmd(f, cmake_settings['test_path'])
+            elif test_begin_marker != '' and test_begin_marker in line:
+                added_test_suite = True
+                lines += parse_set_cmd(f, cmake_settings['test_suite'])
     # Write new content to file.
     with open(cmake_file, 'w') as f:
         for line in lines:
             f.write(line)
             f.write('\n')
+    # Check whether all settings had an effect.
+    if source_begin_marker != '' and not added_source_file:
+        print('*** could not add source file for marker: {}'.format(source_begin_marker))
+    if test_begin_marker != '' and not added_source_file:
+        print('*** could not test suite for marker: {}'.format(test_begin_marker))
 
 def extend_cmake(cmake_settings, generate_source, generate_test):
     if not generate_source and not generate_test:
         return
-    sources_marker = ''
+    source_begin_marker = ''
     if generate_source:
-        sources_marker = 'set(' + cmake_settings['source_var']
-    test_marker = ''
-    if generate_test and 'test_var' in cmake_settings:
-        test_marker = 'set(' + cmake_settings['test_var']
+        source_begin_marker = cmake_settings['source_begin_marker']
+    test_begin_marker = ''
+    if generate_test and 'test_begin_marker' in cmake_settings:
+        test_begin_marker = cmake_settings['test_begin_marker']
     if 'test_file' in cmake_settings:
-        if sources_marker != '':
-            extend_cmake_impl(cmake_settings, cmake_settings['file'], sources_marker, '')
-        if test_marker != '':
-            extend_cmake_impl(cmake_settings, cmake_settings['test_file'], '', test_marker)
+        if source_begin_marker != '':
+            extend_cmake_impl(cmake_settings, cmake_settings['file'], source_begin_marker, '')
+        if test_begin_marker != '':
+            extend_cmake_impl(cmake_settings, cmake_settings['test_file'], '', test_begin_marker)
     else:
-        extend_cmake_impl(cmake_settings, cmake_settings['file'], sources_marker, test_marker)
+        extend_cmake_impl(cmake_settings, cmake_settings['file'], source_begin_marker, test_begin_marker)
 
 def make_file(file_path, copyright, tpl, replacements):
     # Make sure directory exists.
     dirname = os.path.dirname(file_path)
     if not os.path.isdir(dirname):
         os.makedirs(os.path.dirname(file_path))
-    # Create (or override) file and write content.
-    with open(file_path, 'w') as f:
-        f.write(copyright)
-        f.write(tpl % replacements)
+    # Create file and write content if it does not exist yet.
+    if os.path.isfile(file_path):
+        print('*** file {} already exists'.format(file_path))
+    else:
+        with open(file_path, 'w') as f:
+            f.write(copyright)
+            f.write(tpl % replacements)
 
 def guess_project(qualified_name):
     suffix_end = qualified_name.index('::')
     top_level = qualified_name[:suffix_end]
-    if top_level == "tenzir":
-        return "core"
     return top_level
 
 # Generates a header plus source file for a class as well as a unit test.

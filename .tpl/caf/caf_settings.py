@@ -30,6 +30,7 @@ def make_paths(root_dir, qualified_name):
     # Compute paths to .cpp files relative to component directory.
     rel_cpp = os.path.join('src', '/'.join(namev[1:-1]), class_name + '.cpp')
     rel_tst = os.path.join('test', '/'.join(namev[1:-1]), class_name + '.cpp')
+    test_suite = '.'.join(namev[1:])
     # Get the absolute path to our component.
     component = get_component(qualified_name)
     component_dir = os.path.join(root_dir, component_dirs[component])
@@ -44,13 +45,15 @@ def make_paths(root_dir, qualified_name):
             # Path of the CMakeLists.txt
             'file': os.path.join(component_dir, 'CMakeLists.txt'),
             # Name of the sources variable in CMake.
-            'source_var': cmake_var_prefix + '_SOURCES',
+            'source_begin_marker': 'add_library({}_obj'.format(component),
             # Relative path to the source file for CMake.
             'source_path': rel_cpp,
             # Name of the unit test variable in CMake.
-            'test_var': cmake_var_prefix + '_TEST_SOURCES',
+            'test_begin_marker': 'caf_add_test_suites(caf-',
             # Relative path to the unit test file for CMake.
             'test_path': rel_tst,
+            # CMake entry for this test suite.
+            'test_suite': test_suite,
         },
     }
 
