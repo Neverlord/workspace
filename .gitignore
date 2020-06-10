@@ -4,6 +4,6 @@ broker/
 caf/
 continuous-integration/
 incubator/
+ninja_flags.txt
 run.sh
-vast/
 zeek/

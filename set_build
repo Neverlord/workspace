@@ -30,14 +30,19 @@ def main():
   target_suffix = lambda target : '/build/' + build_type + ' ' + target
   # compute full build order including dependencies
   build_order = resolve_dependencies(sys.argv[2])
+  # check for optional Ninja flags
+  user_flags = ''
+  if os.path.isfile('ninja_flags.txt'):
+      with open('ninja_flags.txt') as f:
+          user_flags = f.read().strip()
   # write workspaces Makefile
   with open('Makefile', 'w') as f:
     f.write('all:\n\t')
-    f.write(' && '.join('ninja -C ' + x + buildSuffix for x in build_order))
+    f.write(' && '.join('ninja {} -C {}{}'.format(user_flags, x, buildSuffix) for x in build_order))
     f.write('\n')
     for target in ['clean', 'install']:
       f.write(target + ':\n\t')
-      f.write(' && '.join('ninja -C ' + x + target_suffix(target) for x in build_order))
+      f.write(' && '.join('ninja -C {}{}'.format(x, target_suffix(target)) for x in build_order))
       f.write('\n')
   # read all compile databases into a single one
   db = []
