@@ -12,3 +12,7 @@ function find_compile_command_dbs() {
 }
 
 jq '.[]' $(find_compile_command_dbs) | jq -s '.' > compile_commands.json
+
+if command -v ctags >/dev/null 2>&1 ; then
+  ctags $(jq --raw-output '.[] | .file' compile_commands.json)
+fi
