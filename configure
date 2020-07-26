@@ -15,6 +15,11 @@ settings = json.load(open(workspace + '/settings.json'))
 deps = settings['dependencies']
 dev_mode_flags = settings['dev-mode-flags']
 forced_flags = settings['forced-flags']
+# check for optional Ninja flags
+ninja_flags = []
+if os.path.isfile('ninja_flags.txt'):
+    with open('ninja_flags.txt') as f:
+        ninja_flags = f.read().strip().split()
 
 # configures whether we run in test mode
 dry_run = False
@@ -46,7 +51,7 @@ def config_project(project, settings, options):
 def build_project(project, settings):
   path = os.path.join(workspace, project)
   os.chdir(path)
-  cmd = ["ninja", "-C", settings['build-dir']]
+  cmd = ["ninja", "-C", settings['build-dir']] + ninja_flags
   print('>>> call: ' + str(cmd))
   if not dry_run:
     check_call(cmd)
