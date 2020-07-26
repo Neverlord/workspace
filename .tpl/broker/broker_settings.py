@@ -1,6 +1,6 @@
 import os, datetime
 
-def make_paths(root_dir, qualified_name):
+def make_paths(root_dir, component, qualified_name):
     if not qualified_name.startswith('broker::'):
         raise Exception('qualified name must start with "broker::"')
     namev = qualified_name.split('::')

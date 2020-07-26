@@ -8,7 +8,7 @@ component_dirs = {
     'libcaf_net': os.path.join('incubator', 'libcaf_net'),
 }
 
-def get_component(qualified_name):
+def guess_component(qualified_name):
     if qualified_name.startswith('caf::io'):
         return 'libcaf_io'
     if qualified_name.startswith('caf::openssl'):
@@ -19,7 +19,7 @@ def get_component(qualified_name):
         return 'libcaf_net'
     return 'libcaf_core'
 
-def make_paths(root_dir, qualified_name):
+def make_paths(root_dir, component, qualified_name):
     if not qualified_name.startswith('caf::'):
         raise Exception('qualified name must start with "caf::"')
     namev = qualified_name.split('::')
@@ -32,7 +32,8 @@ def make_paths(root_dir, qualified_name):
     rel_tst = os.path.join('test', '/'.join(namev[1:-1]), class_name + '.cpp')
     test_suite = '.'.join(namev[1:])
     # Get the absolute path to our component.
-    component = get_component(qualified_name)
+    if not component:
+        component = guess_component(qualified_name)
     component_dir = os.path.join(root_dir, component_dirs[component])
     cmake_var_prefix = component[3:].upper()
     return {

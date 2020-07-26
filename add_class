@@ -116,7 +116,8 @@ def guess_project(qualified_name):
     return top_level
 
 # Generates a header plus source file for a class as well as a unit test.
-def generate_from_name(generate_header, generate_source, generate_test, qualified_name):
+def generate_from_name(generate_header, generate_source, generate_test,
+                       component, qualified_name):
     # Extract the project from the given name.
     project = guess_project(qualified_name)
     # Load the template module for that project.
@@ -125,7 +126,7 @@ def generate_from_name(generate_header, generate_source, generate_test, qualifie
     mod = __import__(project + '_settings')
     sys.path.pop()
     # Load project-specific paths.
-    paths = mod.make_paths(workspace, qualified_name)
+    paths = mod.make_paths(workspace, component, qualified_name)
     # Add new files to CMake.
     extend_cmake(paths['cmake'], generate_source, generate_test)
     # Load project-specific templates.
@@ -149,6 +150,7 @@ def generate_from_name(generate_header, generate_source, generate_test, qualifie
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Add a new C++ class.')
+    parser.add_argument('--component', help="specify the project component")
     parser.add_argument('-H', dest='no_header', action='store_true',
                         help="don't generate header file")
     parser.add_argument('-C', dest='no_cpp', action='store_true',
@@ -157,4 +159,5 @@ if __name__ == "__main__":
                         help="don't generate unit test file")
     parser.add_argument("name", help='fully qualified class name')
     args = parser.parse_args()
-    generate_from_name(not args.no_header, not args.no_cpp, not args.no_test, args.name)
+    generate_from_name(not args.no_header, not args.no_cpp, not args.no_test,
+                       args.component, args.name)
