@@ -2,13 +2,17 @@
 
 # Usage example:
 # checkout caf
-# checkout -https vast
+# checkout -https broker
 
 import argparse
 
 from subprocess import check_call
 
 urls = {
+  'articles' : {
+    'ssh': 'git@github.com:CAFcademy/articles.git',
+    'https': 'https://github.com/CAFcademy/articles.git',
+  }
   'caf': {
     'ssh': 'git@github.com:actor-framework/actor-framework.git',
     'https': 'https://github.com/actor-framework/actor-framework.git',
@@ -20,10 +24,6 @@ urls = {
   'broker': {
     'ssh': 'git@github.com:zeek/broker.git',
     'https': 'https://github.com/zeek/broker.git',
-  },
-  'vast': {
-    'ssh': 'git@github.com:vast-io/vast.git',
-    'https': 'https://github.com/vast-io/vast.git',
   },
   'incubator': {
     'ssh': 'git@github.com:actor-framework/incubator.git',

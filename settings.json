@@ -1,5 +1,8 @@
 {
   "dependencies": {
+    "articles": [
+      "caf"
+    ],
     "benchmarks": [
       "caf"
     ],
