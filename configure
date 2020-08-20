@@ -130,7 +130,7 @@ if __name__ == "__main__":
     abs_path = os.path.join(workspace, name)
     if is_cmake_project(name):
       projs[name] = {
-        'build-dir': abs_path + '/build/' + build_type,
+        'build-dir': workspace + '/build/' + build_type + '/' + name,
         'prefix': workspace + '/bundle/' + build_type,
         'build': False,
         'configured': False,

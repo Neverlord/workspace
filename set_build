@@ -22,12 +22,13 @@ def resolve_dependencies(name):
   result.append(name)
   return result
 
+def build_dir(build_type, project_name):
+  return 'build/{}/{}'.format(build_type, project_name)
+
 def main():
   build_type = sys.argv[1]
   # convenience variables
-  buildSuffix = '/build/' + build_type
-  dbSuffix = buildSuffix + '/compile_commands.json'
-  target_suffix = lambda target : '/build/' + build_type + ' ' + target
+  dbSuffix = '/compile_commands.json'
   # compute full build order including dependencies
   build_order = resolve_dependencies(sys.argv[2])
   # check for optional Ninja flags
@@ -38,15 +39,15 @@ def main():
   # write workspaces Makefile
   with open('Makefile', 'w') as f:
     f.write('all:\n\t')
-    f.write(' && '.join('ninja {} -C {}{}'.format(user_flags, x, buildSuffix) for x in build_order))
+    f.write(' && '.join('ninja {} -C {}'.format(user_flags, build_dir(build_type, x)) for x in build_order))
     f.write('\n')
     for target in ['clean', 'install']:
       f.write(target + ':\n\t')
-      f.write(' && '.join('ninja -C {}{}'.format(x, target_suffix(target)) for x in build_order))
+      f.write(' && '.join('ninja -C {} {}'.format(build_dir(build_type, x), target) for x in build_order))
       f.write('\n')
   # read all compile databases into a single one
   db = []
-  for lst in (json.load(open(x + dbSuffix)) for x in build_order):
+  for lst in (json.load(open(build_dir(build_type, x) + dbSuffix)) for x in build_order):
     db.extend(lst)
   json.dump(db, open(workspace + '/compile_commands.json', 'w'), indent = 2)
 
