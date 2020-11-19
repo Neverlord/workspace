@@ -1,7 +1,6 @@
 #!/bin/sh
 
-# This script creates 4 local git aliases and installs a pre-commit hook that
-# assists with working in the VAST repository:
+# This script creates 4 local git aliases and installs a pre-commit:
 # - `git format-show`        checks if clang-format is happy with the current
 #                            staging area.
 # - `git format`             formats the lines that are modified in the current
