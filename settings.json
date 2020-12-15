@@ -12,15 +12,17 @@
     "incubator": [
       "caf"
     ],
-    "zeek": [
-      "broker",
+    "micro-benchmarks": [
       "caf"
+    ],
+    "zeek": [
+      "broker"
     ]
   },
   "dev-mode-flags": {
     "broker": [
       "--build-type=debug",
-      "--sanitizers=address",
+      "--sanitizers=address,undefined",
       "--enable-debug"
     ],
     "caf": [
@@ -30,7 +32,7 @@
       "--dev-mode"
     ],
     "zeek": [
-      "--sanitizers=address",
+      "--sanitizers=address,undefined",
       "--enable-debug"
     ]
   },
