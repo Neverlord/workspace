@@ -1,9 +1,12 @@
 Makefile
+articles/
 benchmarks/
+blog/
 broker/
 caf/
 continuous-integration/
 incubator/
+micro-benchmarks/
 ninja_flags.txt
 run.sh
 zeek/
