@@ -102,7 +102,10 @@ if __name__ == "__main__":
   # parse CLI arguments
   for arg in sys.argv[1:]:
     rxres = pattern.match(arg)
-    if arg == '--dev-mode':
+    if arg == '-h' or arg == '--help':
+        print('configure [--dev-mode] [--dry-run] [--delete-old-builds] [--build-type=STR] ...')
+        exit()
+    elif arg == '--dev-mode':
       for key in options:
         options[key].extend(dev_mode_flags.get(key, []))
     elif arg == '--dry-run':
