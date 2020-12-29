@@ -33,7 +33,8 @@
     ],
     "zeek": [
       "--sanitizers=address,undefined",
-      "--enable-debug"
+      "--enable-debug",
+      "--enable-cpp-tests"
     ]
   },
   "forced-flags": {
