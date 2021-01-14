@@ -29,7 +29,11 @@ def read_tpl(project):
             tpls[entry] = f.read()
     return tpls
 
+def indentation_width(line):
+    return len(line) - len(line.lstrip())
+
 def parse_set_cmd(f, new_entry):
+    indentation = ''
     entries = set()
     for line_with_newline in f:
         line = line_with_newline.rstrip()
@@ -37,13 +41,19 @@ def parse_set_cmd(f, new_entry):
         if not entries:
             indentation = ' ' * (len(line) - len(line.lstrip()))
             entries.add(indentation + new_entry)
-        if line == ')':
+            entries.add(line)
+        elif line == ')':
             result = list(entries)
             result.sort()
             result.append(')')
             return result
         elif line == '':
             pass
+        elif indentation_width(line) != len(indentation):
+            result = list(entries)
+            result.sort()
+            result.append(line)
+            return result
         elif line[-1] == ')':
             entries.add(line[:-1])
             result = list(entries)
@@ -52,7 +62,7 @@ def parse_set_cmd(f, new_entry):
             return result
         else:
             entries.add(line)
-    raise Exception("format error in CMakeLists.txt: no closing ')' to set(")
+    raise Exception("format error in CMakeLists.txt: source or test block")
 
 def extend_cmake_impl(cmake_settings, cmake_file, source_begin_marker, test_begin_marker):
     lines=[]

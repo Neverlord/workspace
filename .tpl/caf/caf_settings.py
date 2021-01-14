@@ -46,11 +46,11 @@ def make_paths(root_dir, component, qualified_name):
             # Path of the CMakeLists.txt
             'file': os.path.join(component_dir, 'CMakeLists.txt'),
             # Name of the sources variable in CMake.
-            'source_begin_marker': 'add_library({}_obj'.format(component),
+            'source_begin_marker': 'SOURCES',
             # Relative path to the source file for CMake.
             'source_path': rel_cpp,
             # Name of the unit test variable in CMake.
-            'test_begin_marker': 'caf_add_test_suites(caf-',
+            'test_begin_marker': 'TEST_SUITES',
             # Relative path to the unit test file for CMake.
             'test_path': rel_tst,
             # CMake entry for this test suite.
