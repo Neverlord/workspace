@@ -10,4 +10,5 @@ micro-benchmarks/
 ninja_flags.txt
 run.sh
 settings.json
+website/
 zeek/
