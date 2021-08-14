@@ -84,6 +84,9 @@ def process_projects(xs, options):
   for name, settings in xs.items():
     process_project(name, settings, xs, options, False)
 
+def print_help_text():
+  print('configure [--dev-mode] [--dry-run] [--build-type=STR] [--delete-old-builds] ...')
+  exit()
 
 if __name__ == "__main__":
   options = {}
@@ -95,16 +98,13 @@ if __name__ == "__main__":
   # our default pattern extracts the project name (group 1) and
   # project-specific options (group 2)
   pattern = re.compile("--([a-z]+):(.+)")
-  # setting the build type affects all projects
-  build_type_pattern = re.compile("--build-type=(.+)")
   # build debug by default
   build_type = "debug"
   # parse CLI arguments
   for arg in sys.argv[1:]:
     rxres = pattern.match(arg)
     if arg == '-h' or arg == '--help':
-        print('configure [--dev-mode] [--dry-run] [--delete-old-builds] [--build-type=STR] ...')
-        exit()
+      print_help_text()
     elif arg == '--dev-mode':
       for key in options:
         options[key].extend(dev_mode_flags.get(key, []))
@@ -121,12 +121,11 @@ if __name__ == "__main__":
           options[key].append(opt)
       else:
         options[project].append(opt)
+    elif arg.startswith('--build-type='):
+      build_type = arg[13:]
     else:
-      rxres = build_type_pattern.match(arg)
-      if rxres != None:
-        build_type = rxres.group(1)
-        for key in options:
-          options[key].append(arg)
+      print('invalid argument: ' + arg)
+      print_help_text()
   # scan workspace for loaded projects
   projs = {}
   for name in os.listdir(workspace):
