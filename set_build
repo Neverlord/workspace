@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 
-import sys, os, json
+import sys, os, json, subprocess
 
 # get current workspace directory
 workspace = os.path.dirname(os.path.realpath(__file__))
 
 # fetch the dependencies from the settings file
 settings = json.load(open(workspace + '/settings.json'))
-deps = settings['dependencies']
+deps = settings.get('dependencies', [])
+in_source_build = settings.get('in-source-build', False)
+build_program = settings.get('build-program', 'ninja')
+build_flags = settings.get('build-flags', '')
 
 def resolve_dependencies(name):
   # build dependency list
@@ -23,30 +26,40 @@ def resolve_dependencies(name):
   return result
 
 def main():
-  build_type = sys.argv[1]
   # convenience variables
-  buildSuffix = '/build/' + build_type
-  dbSuffix = buildSuffix + '/compile_commands.json'
-  target_suffix = lambda target : '/build/' + build_type + ' ' + target
+  build_type = sys.argv[1]
+  proj = sys.argv[2]
+  # string factories
+  build_fmt =  '{}/build/{}' if in_source_build else 'build/{}/{}'
+  build_dir = lambda x: build_fmt.format(x, build_type)
+  make_cmd = lambda x: '{} {} -C {}'.format(build_program, build_flags, build_dir(x))
   # compute full build order including dependencies
-  build_order = resolve_dependencies(sys.argv[2])
-  # check for optional Ninja flags
-  user_flags = ''
-  if os.path.isfile('ninja_flags.txt'):
-      with open('ninja_flags.txt') as f:
-          user_flags = f.read().strip()
-  # write workspaces Makefile
+  proj_deps = list(filter(lambda x: x != proj, resolve_dependencies(proj)))
+  # get all targets
+  not_reserved = lambda target : not target in ['all', 'clean', 'install']
+  is_phony = lambda line : ': phony' in line
+  drop_phony = lambda line : line[0 : len(line) - len(': phony')].strip()
+  proc_out = subprocess.check_output([build_program, '-C', build_dir(proj), 'help'])
+  targets = list(filter(not_reserved, map(drop_phony, filter(is_phony, proc_out.split('\n')))))
+  # write Makefile
   with open('Makefile', 'w') as f:
-    f.write('all:\n\t')
-    f.write(' && '.join('ninja {} -C {}{}'.format(user_flags, x, buildSuffix) for x in build_order))
+    f.write('all: wsProjDepsTarget\n')
+    f.write('\t{}\n'.format(make_cmd(proj)))
     f.write('\n')
-    for target in ['clean', 'install']:
-      f.write(target + ':\n\t')
-      f.write(' && '.join('ninja -C {}{}'.format(x, target_suffix(target)) for x in build_order))
+    if not proj_deps:
+      f.write('wsProjDepsTarget: ;\n')
+    else:
+      f.write('wsProjDepsTarget:\n')
+      for dep in proj_deps:
+        f.write('\t{}\n'.format(make_cmd(dep)))
+    f.write('\n')
+    for target in targets + ['clean', 'install', 'help']:
+      f.write('{}: wsProjDepsTarget\n'.format(target))
+      f.write('\t{} {}\n'.format(make_cmd(proj), target))
       f.write('\n')
   # read all compile databases into a single one
   db = []
-  for lst in (json.load(open(x + dbSuffix)) for x in build_order):
+  for lst in (json.load(open(build_dir(x) + '/compile_commands.json')) for x in proj_deps + [proj]):
     db.extend(lst)
   json.dump(db, open(workspace + '/compile_commands.json', 'w'), indent = 2)
 
