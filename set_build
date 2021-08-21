@@ -7,8 +7,9 @@ workspace = os.path.dirname(os.path.realpath(__file__))
 
 # fetch the dependencies from the settings file
 settings = json.load(open(workspace + '/settings.json'))
-deps = settings.get('dependencies', [])
+deps = settings.get('dependencies', {})
 in_source_build = settings.get('in-source-build', False)
+makefile_in_subdir = settings.get('makefile-in-subdir', False)
 build_program = settings.get('build-program', 'ninja')
 build_flags = settings.get('build-flags', '')
 
@@ -32,7 +33,8 @@ def main():
   # string factories
   build_fmt =  '{}/build/{}' if in_source_build else 'build/{}/{}'
   build_dir = lambda x: build_fmt.format(x, build_type)
-  make_cmd = lambda x: '{} {} -C {}'.format(build_program, build_flags, build_dir(x))
+  abs_build_dir = lambda x: '{}/{}'.format(workspace, build_dir(x))
+  make_cmd = lambda x: '{} {} -C {}'.format(build_program, build_flags, abs_build_dir(x))
   # compute full build order including dependencies
   proj_deps = list(filter(lambda x: x != proj, resolve_dependencies(proj)))
   # get all targets
@@ -42,7 +44,11 @@ def main():
   proc_out = subprocess.check_output([build_program, '-C', build_dir(proj), 'help'])
   targets = list(filter(not_reserved, map(drop_phony, filter(is_phony, proc_out.split('\n')))))
   # write Makefile
-  with open('Makefile', 'w') as f:
+  if makefile_in_subdir:
+    makefile_path = os.path.join(workspace, proj, 'Makefile')
+  else:
+    makefile_path = os.path.join(workspace, 'Makefile')
+  with open(makefile_path, 'w') as f:
     f.write('all: wsProjDepsTarget\n')
     f.write('\t{}\n'.format(make_cmd(proj)))
     f.write('\n')

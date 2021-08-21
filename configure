@@ -4,22 +4,25 @@
 
 import sys, re, os, shutil, json
 
-from subprocess import call
-from subprocess import check_call
+from subprocess import call, check_call
 
 # get current workspace directory
 workspace = os.path.dirname(os.path.realpath(__file__))
 
 # read settings
 settings = json.load(open(workspace + '/settings.json'))
-deps = settings['dependencies']
-dev_mode_flags = settings['dev-mode-flags']
-forced_flags = settings['forced-flags']
+deps = settings.get('dependencies', {})
+forced_flags = settings.get('forced-flags', {})
+in_source_build = settings.get('in-source-build', False)
+
 # check for optional Ninja flags
 ninja_flags = []
 if os.path.isfile('ninja_flags.txt'):
     with open('ninja_flags.txt') as f:
         ninja_flags = f.read().strip().split()
+
+# build debug by default
+build_type = "debug"
 
 # configures whether we run in test mode
 dry_run = False
@@ -27,87 +30,123 @@ dry_run = False
 # configures whether we delete existing build directories
 clean_slate = False
 
+# returns the absolute build path for a project
+def abs_build_path(name):
+ if in_source_build:
+   return os.path.join(workspace, name, 'build', build_type)
+ else:
+   return os.path.join(workspace, 'build', name, build_type)
+
+def abs_install_dir(name):
+  return os.path.join(workspace, 'bundle', name, build_type)
+
 # invokes ./configure script of the project
-def config_project(project, settings, options):
-  cli = options[project]
-  cli.extend(forced_flags.get(project, []))
-  path = os.path.join(workspace, project)
-  print('>>> chdir: ' + path)
-  os.chdir(path)
-  build_dir = settings['build-dir']
-  prefix = settings['prefix']
+def config_project(name, cfg):
+  build_dir = abs_build_path(name)
+  # get configured flags for this build from settings.json
+  flags_key = 'flags.{}.{}'.format(name, build_type)
+  if not flags_key in settings:
+    print('could not find {} in your settings.json'.format(flags_key))
+    exit()
+  cli = ['cmake',
+         '-S', cfg['cmake-root'],
+         '-B', build_dir,
+         '-G', 'Ninja',
+         '-DCMAKE_INSTALL_PREFIX={}'.format(abs_install_dir(name))]
+  flags = read_flags(name, build_type)
+  if 'flags' in cfg:
+    flags.update(cfg['flags'])
+  flags.update(forced_flags)
+  for key, val in flags.items():
+    cli.append('-D{}={}'.format(key, val))
+  prefix = abs_install_dir(name)
   if os.path.isdir(build_dir):
-    print('>>> remove outdated build directory: ' + build_dir)
     if clean_slate and not dry_run:
+      print('>>> remove outdated build directory: ' + build_dir)
       shutil.rmtree(build_dir)
-  cmd = ["./configure", "--build-dir=" + build_dir, "--prefix=" + prefix]
-  cmd.extend(cli)
-  print('>>> call: ' + ' '.join(cmd))
+  print('>>> call: ' + ' '.join(cli))
   if not dry_run:
-    check_call(cmd)
-  os.chdir(workspace)
+    check_call(cli)
 
 # builds the project via ninja
-def build_project(project, settings):
-  path = os.path.join(workspace, project)
-  os.chdir(path)
-  cmd = ["ninja", "-C", settings['build-dir']] + ninja_flags
+def build_project(name, cfg):
+  cmd = ["ninja", "-C", abs_build_path(name)] + ninja_flags
   print('>>> call: ' + str(cmd))
   if not dry_run:
     check_call(cmd)
-  os.chdir(workspace)
 
-def is_hidden(file_name):
-  return name.startswith('.')
+def cmake_root(dir_name):
+  if os.path.isfile(os.path.join(workspace, dir_name, 'CMakeLists.txt')):
+    return os.path.join(workspace, dir_name)
+  if os.path.isfile(os.path.join(workspace, dir_name, 'src', 'CMakeLists.txt')):
+    return os.path.join(workspace, dir_name, 'src')
+  raise RuntimeError("no CMakeLists.txt found in expected locations")
 
-def is_cmake_project(dir_name):
-  return os.path.isdir(dir_name) and not is_hidden(dir_name) and os.path.isfile(dir_name + '/CMakeLists.txt')
+def read_flags(name, build_type):
+  flags_key = 'flags.{}.{}'.format(name, build_type)
+  if not flags_key in settings:
+    try:
+      idx = ['debug', 'release', 'relwithdebinfo', 'minsizerel'].index(flags_key.lower())
+      cmake_build_types = ['Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel']
+      settings[flags_key] = {'CMAKE_BUILD_TYPE': cmake_build_types[idx]}
+    except:
+      print('could not find {} in your settings.json'.format(flags_key))
+      exit()
+  return settings[flags_key]
 
-def process_project(name, state, xs, options, as_depdency):
+def rd(xs, key):
+  if not key in xs:
+    xs[key] = {}
+  return xs[key]
+
+def cmake_dep_var(name):
+  fallback = '{}_ROOT'.format(name.upper().replace('-', '_'))
+  cmake_names = settings.get('cmake-names', {})
+  return cmake_names.get(name, fallback)
+
+def process_project(name, cfg, xs, as_depdency):
   print('>>> process ' + name)
   # build dependencies first
   if name in deps:
     for dep in deps[name]:
       print('>>> resolve depdency of ' + name + ': ' + dep)
-      process_project(dep, xs[dep], xs, options, True)
-      options[name].append('--with-' + dep + '=' + xs[dep]['build-dir'])
-  if not state['configured']:
+      if not dep in xs:
+        xs[dep] = {
+          'build': False,
+          'configured': False,
+          'cmake-root': cmake_root(dep),
+        }
+      process_project(dep, xs[dep], xs, True)
+      flags = rd(cfg, 'flags')
+      flags[cmake_dep_var(dep)] = abs_build_path(dep)
+  if not cfg['configured']:
     print('>>> configure ' + name)
-    config_project(name, xs[name], options)
-    state['configured'] = True
-  if as_depdency and not state['build']:
+    config_project(name, cfg)
+    cfg['configured'] = True
+  if as_depdency and not cfg['build']:
     print('>>> build ' + name)
-    build_project(name, xs[name])
-    state['build'] = True
+    build_project(name, cfg)
+    cfg['build'] = True
 
-def process_projects(xs, options):
-  for name, settings in xs.items():
-    process_project(name, settings, xs, options, False)
+def process_projects(xs):
+  for name, cfg in xs.items():
+    process_project(name, cfg, xs, False)
 
 def print_help_text():
-  print('configure [--dev-mode] [--dry-run] [--build-type=STR] [--delete-old-builds] ...')
+  print('configure [--dry-run] [--build-type=STR] [--delete-old-builds] PROJECTS...')
   exit()
 
 if __name__ == "__main__":
   options = {}
-  # first iterate all subdirectories (= projects) and add dictionary entries
-  # for each of them
-  for name in os.listdir(workspace):
-    if is_cmake_project(name):
-      options[name] = ["--generator=Ninja"]
   # our default pattern extracts the project name (group 1) and
   # project-specific options (group 2)
   pattern = re.compile("--([a-z]+):(.+)")
-  # build debug by default
-  build_type = "debug"
   # parse CLI arguments
+  projects = {}
   for arg in sys.argv[1:]:
     rxres = pattern.match(arg)
     if arg == '-h' or arg == '--help':
       print_help_text()
-    elif arg == '--dev-mode':
-      for key in options:
-        options[key].extend(dev_mode_flags.get(key, []))
     elif arg == '--dry-run':
       dry_run = True
     elif arg == '--delete-old-builds':
@@ -124,18 +163,17 @@ if __name__ == "__main__":
     elif arg.startswith('--build-type='):
       build_type = arg[13:]
     else:
-      print('invalid argument: ' + arg)
-      print_help_text()
-  # scan workspace for loaded projects
-  projs = {}
-  for name in os.listdir(workspace):
-    abs_path = os.path.join(workspace, name)
-    if is_cmake_project(name):
-      projs[name] = {
-        'build-dir': abs_path + '/build/' + build_type,
-        'prefix': workspace + '/bundle/' + build_type,
-        'build': False,
-        'configured': False,
-      }
-  # configure/build recursively
-  process_projects(projs, options)
+      proj_root = cmake_root(arg)
+      if arg in projects:
+        projects[arg]['cmake-root'] = os.path.join(workspace, proj_root)
+      else:
+        projects[arg] = {'cmake-root': os.path.join(workspace, proj_root)}
+  # initialize config for loaded settings
+  for name, cfg in projects.items():
+    if not 'cmake-root' in cfg:
+      print('flags were passed to {} but its not listed as project to build'.format(flags_key))
+      exit()
+    cfg['build'] = False
+    cfg['configured'] = False
+  # configure and build recursively
+  process_projects(projects)
