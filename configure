@@ -40,20 +40,27 @@ def abs_build_path(name):
 def abs_install_dir(name):
   return os.path.join(workspace, 'bundle', name, build_type)
 
+def read_flags(name):
+  flags_key = 'flags.{}.{}'.format(name, build_type)
+  if not flags_key in settings:
+    try:
+      idx = ['debug', 'release', 'relwithdebinfo', 'minsizerel'].index(build_type.lower())
+      cmake_build_types = ['Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel']
+      settings[flags_key] = {'CMAKE_BUILD_TYPE': cmake_build_types[idx]}
+    except:
+      print('could not find {} in your settings.json'.format(flags_key))
+      exit()
+  return settings[flags_key]
+
 # invokes ./configure script of the project
 def config_project(name, cfg):
   build_dir = abs_build_path(name)
-  # get configured flags for this build from settings.json
-  flags_key = 'flags.{}.{}'.format(name, build_type)
-  if not flags_key in settings:
-    print('could not find {} in your settings.json'.format(flags_key))
-    exit()
   cli = ['cmake',
          '-S', cfg['cmake-root'],
          '-B', build_dir,
          '-G', 'Ninja',
          '-DCMAKE_INSTALL_PREFIX={}'.format(abs_install_dir(name))]
-  flags = read_flags(name, build_type)
+  flags = read_flags(name)
   if 'flags' in cfg:
     flags.update(cfg['flags'])
   flags.update(forced_flags)
@@ -81,18 +88,6 @@ def cmake_root(dir_name):
   if os.path.isfile(os.path.join(workspace, dir_name, 'src', 'CMakeLists.txt')):
     return os.path.join(workspace, dir_name, 'src')
   raise RuntimeError("no CMakeLists.txt found in expected locations")
-
-def read_flags(name, build_type):
-  flags_key = 'flags.{}.{}'.format(name, build_type)
-  if not flags_key in settings:
-    try:
-      idx = ['debug', 'release', 'relwithdebinfo', 'minsizerel'].index(flags_key.lower())
-      cmake_build_types = ['Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel']
-      settings[flags_key] = {'CMAKE_BUILD_TYPE': cmake_build_types[idx]}
-    except:
-      print('could not find {} in your settings.json'.format(flags_key))
-      exit()
-  return settings[flags_key]
 
 def rd(xs, key):
   if not key in xs:
