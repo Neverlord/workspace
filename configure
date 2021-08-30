@@ -38,7 +38,7 @@ def abs_build_path(name):
    return os.path.join(workspace, 'build', name, build_type)
 
 def abs_install_dir(name):
-  return os.path.join(workspace, 'bundle', name, build_type)
+  return os.path.join(workspace, 'bundle', build_type)
 
 def read_flags(name):
   flags_key = 'flags.{}.{}'.format(name, build_type)
