@@ -31,12 +31,12 @@ urls = {
   },
   'website': {
     'ssh': 'git@github.com:actor-framework/actor-framework.github.io.git',
-    'https', 'https://github.com/actor-framework/actor-framework.github.io.git',
-  }
+    'https': 'https://github.com/actor-framework/actor-framework.github.io.git',
+  },
   'zeek': {
     'ssh': 'git@github.com:zeek/zeek.git',
     'https': 'https://github.com/zeek/zeek.git',
-  },
+  }
 }
 
 if __name__ == "__main__":
