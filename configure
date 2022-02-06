@@ -14,6 +14,7 @@ settings = json.load(open(workspace + '/settings.json'))
 deps = settings.get('dependencies', {})
 forced_flags = settings.get('forced-flags', {})
 in_source_build = settings.get('in-source-build', False)
+cmake_cmd = settings.get("cmake-cmd", "cmake")
 
 # check for optional Ninja flags
 ninja_flags = []
@@ -33,12 +34,12 @@ clean_slate = False
 # returns the absolute build path for a project
 def abs_build_path(name):
  if in_source_build:
-   return os.path.join(workspace, name, 'build', build_type)
+   return os.path.join(workspace, 'project', name, 'build', build_type)
  else:
    return os.path.join(workspace, 'build', name, build_type)
 
 def abs_install_dir(name):
-  return os.path.join(workspace, 'bundle', build_type)
+  return os.path.join(workspace, 'local', build_type)
 
 def read_flags(name):
   flags_key = 'flags.{}.{}'.format(name, build_type)
@@ -55,9 +56,8 @@ def read_flags(name):
 # invokes ./configure script of the project
 def config_project(name, cfg):
   build_dir = abs_build_path(name)
-  cli = ['cmake',
-         '-S', cfg['cmake-root'],
-         '-B', build_dir,
+  cli = [cmake_cmd,
+         cfg['cmake-root'],
          '-G', 'Ninja',
          '-DCMAKE_INSTALL_PREFIX={}'.format(abs_install_dir(name))]
   flags = read_flags(name)
@@ -73,7 +73,9 @@ def config_project(name, cfg):
       shutil.rmtree(build_dir)
   print('>>> call: ' + ' '.join(cli))
   if not dry_run:
-    check_call(cli)
+    if not os.path.isdir(build_dir):
+      os.makedirs(build_dir)
+    check_call(cli, cwd=build_dir)
 
 # builds the project via ninja
 def build_project(name, cfg):
@@ -82,12 +84,17 @@ def build_project(name, cfg):
   if not dry_run:
     check_call(cmd)
 
-def cmake_root(dir_name):
-  if os.path.isfile(os.path.join(workspace, dir_name, 'CMakeLists.txt')):
-    return os.path.join(workspace, dir_name)
-  if os.path.isfile(os.path.join(workspace, dir_name, 'src', 'CMakeLists.txt')):
-    return os.path.join(workspace, dir_name, 'src')
-  raise RuntimeError("no CMakeLists.txt found in expected locations")
+def cmake_root(proj_name):
+  dirs = [
+    os.path.join(workspace, proj_name),
+    os.path.join(workspace, proj_name, 'src'),
+    os.path.join(workspace, 'project', proj_name),
+    os.path.join(workspace, 'project', proj_name, 'src'),
+  ]
+  for x in dirs:
+    if os.path.isfile(os.path.join(x, 'CMakeLists.txt')):
+      return x
+  raise RuntimeError('no CMakeLists.txt found in expected locations for {}'.format(proj_name))
 
 def rd(xs, key):
   if not key in xs:
@@ -102,6 +109,7 @@ def cmake_dep_var(name):
 def process_project(name, cfg, xs, as_depdency):
   print('>>> process ' + name)
   # build dependencies first
+  dep_dirs = []
   if name in deps:
     for dep in deps[name]:
       print('>>> resolve depdency of ' + name + ': ' + dep)
@@ -113,7 +121,10 @@ def process_project(name, cfg, xs, as_depdency):
         }
       process_project(dep, xs[dep], xs, True)
       flags = rd(cfg, 'flags')
+      dep_dirs.append(abs_build_path(dep))
       flags[cmake_dep_var(dep)] = abs_build_path(dep)
+  if dep_dirs:
+      flags['CMAKE_PREFIX_PATH'] = ';'.join(dep_dirs)
   if not cfg['configured']:
     print('>>> configure ' + name)
     config_project(name, cfg)
