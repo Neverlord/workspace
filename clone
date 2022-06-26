@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Usage example:
 # checkout caf
@@ -49,4 +49,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     method = args.method
     for repo in args.repos:
-        check_call(['git', 'clone', '--recursive', urls[repo][method], repo])
+        check_call(['git', 'clone', '--recursive', urls[repo][method], 'project/{}'.format(repo)])
