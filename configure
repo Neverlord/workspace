@@ -135,7 +135,7 @@ def process_project(name, cfg, xs, as_depdency):
     cfg['build'] = True
 
 def process_projects(xs):
-  for name, cfg in xs.items():
+  for name, cfg in xs.copy().items():
     process_project(name, cfg, xs, False)
 
 def print_help_text():
