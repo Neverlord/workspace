@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Usage:
 # add_class [-H|-C|-U] QUALIFIED-NAME
@@ -8,8 +8,7 @@
 # -U   No unit test
 
 # Usage example:
-# - Header, class, and test: add_class.py libvast vast::system::foo
-# - Header and test: add_class.py -o libvast vast::system::foo
+# - Header, class, and test: add_class caf:foo
 
 import argparse, sys, os, imp
 
@@ -136,7 +135,7 @@ def generate_from_name(generate_header, generate_source, generate_test,
     mod = __import__(project + '_settings')
     sys.path.pop()
     # Load project-specific paths.
-    paths = mod.make_paths(workspace, component, qualified_name)
+    paths = mod.make_paths(os.path.join(workspace, 'project'), component, qualified_name)
     # Add new files to CMake.
     extend_cmake(paths['cmake'], generate_source, generate_test)
     # Load project-specific templates.
