@@ -28,8 +28,9 @@ def make_paths(root_dir, component, qualified_name):
     # Extract the unqualified class name.
     class_name = namev[-1]
     # Compute paths to .cpp files relative to component directory.
-    rel_cpp = os.path.join('src', '/'.join(namev[1:-1]), class_name + '.cpp')
-    rel_tst = os.path.join('test', '/'.join(namev[1:-1]), class_name + '.cpp')
+    rel_hpp = os.path.join('/'.join(namev[:-1]), class_name + '.hpp')
+    rel_cpp = os.path.join('/'.join(namev[:-1]), class_name + '.cpp')
+    rel_tst = os.path.join('/'.join(namev[:-1]), class_name + '.test.cpp')
     test_suite = '.'.join(namev[1:])
     # Get the absolute path to our component.
     if not component:
@@ -38,7 +39,7 @@ def make_paths(root_dir, component, qualified_name):
     cmake_var_prefix = component[3:].upper()
     return {
         # Absolute paths to generated files.
-        'hpp': os.path.join(component_dir, '/'.join(namev[:-1]), class_name + '.hpp'),
+        'hpp': os.path.join(component_dir, rel_hpp),
         'cpp': os.path.join(component_dir, rel_cpp),
         'tst': os.path.join(component_dir, rel_tst),
         # CMake settings.
@@ -50,11 +51,11 @@ def make_paths(root_dir, component, qualified_name):
             # Relative path to the source file for CMake.
             'source_path': rel_cpp,
             # Name of the unit test variable in CMake.
-            'test_begin_marker': 'TEST_SUITES',
+            'test_begin_marker': 'SOURCES',
             # Relative path to the unit test file for CMake.
             'test_path': rel_tst,
             # CMake entry for this test suite.
-            'test_suite': test_suite,
+            'test_suite': rel_tst,
         },
     }
 
