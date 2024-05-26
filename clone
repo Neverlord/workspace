@@ -9,10 +9,6 @@ import argparse
 from subprocess import check_call
 
 urls = {
-  'articles' : {
-    'ssh': 'git@github.com:CAFcademy/articles.git',
-    'https': 'https://github.com/CAFcademy/articles.git',
-  },
   'caf': {
     'ssh': 'git@github.com:actor-framework/actor-framework.git',
     'https': 'https://github.com/actor-framework/actor-framework.git',
